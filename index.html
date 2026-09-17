@@ -212,6 +212,7 @@ ALGO-SIGN-END -->
 .qbar{padding:8px 12px;gap:7px}.qbar .wdot{display:none}.qbar .qname{font-size:12.5px}
 .qbar .chip{padding:6px 7px;font-size:12px}
 }
+</style>
 <style id="ty">
 /* ===== 体用对照（R7）新样式，沿用既有色彩令牌 ===== */
 .anch{margin-left:auto;flex:0 0 auto;display:flex;border:1px solid #2c3444;border-radius:999px;overflow:hidden}
@@ -330,6 +331,53 @@ ALGO-SIGN-END -->
 .seg2 button{font-size:12px}
 .snapbtn{font-size:11px;padding:5px 10px}
 .fpbar .who b{font-size:12px}
+}
+</style>
+<style id="cc">
+/* ===== 层次对照（R7.7）页面专用样式 =====
+   选择器全部挂在 #ccBox 下：与体用页的 .tyit.lv1 等零冲突，改动不外溢。
+   .yunseg 例外——它要同时出现在两页的吸附条里，所以是全局类名（.seg2 已给「照」页用，不复用）。 */
+#ccBox .momrow{display:flex;align-items:center;gap:7px;margin-bottom:6px}
+#ccBox .step{flex:0 0 30px;height:28px;font:inherit;font-size:15px;line-height:1;border-radius:8px;background:#0c0f16;color:#9aa2b4;border:1px solid #232b3b;padding:0}
+#ccBox .step:active{background:#1a2130}
+#ccBox .mtime{font-size:13.5px;color:#f0d9a8;font-weight:600;letter-spacing:.02em;white-space:nowrap}
+#ccBox .mzh{font-size:11px;color:#79839a;white-space:nowrap}
+#ccBox .nowbtn{margin-left:auto;flex:0 0 auto;height:26px;font:inherit;font-size:11px;border-radius:8px;background:#151a24;color:#9aa2b4;border:1px solid #232b3b;padding:0 9px}
+#ccBox .dist{font-size:11px;color:#c9cfdd;line-height:1.5;margin-top:6px}
+#ccBox .dsub{font-size:10px;color:#5f6879;line-height:1.45;margin-top:1px}
+#ccBox .dist b{font-weight:600}
+#ccBox .dist .f{color:#6fd39b}#ccBox .dist .s{color:#e08a7c}#ccBox .dist .n{color:#9aa2b4}
+#ccBox .lyr{border:1px solid #191f2b;border-radius:10px;background:#0c0f16;padding:4px 9px;margin-bottom:4px}
+#ccBox .lyr:last-of-type{margin-bottom:0}
+#ccBox .lyr.lv1{border-left:3px solid #d9a441}
+#ccBox .lyr.lv2{border-left:3px solid #a8802f}
+#ccBox .lyr.lv3{border-left:3px solid #6d5522}
+#ccBox .lyr.lv4{border-left:3px solid #3a3a3a}
+#ccBox .lyr.lv0{border-left:3px solid #c8452f}
+#ccBox .lyr.lvn{border-left:3px solid #4a5264}
+#ccBox .r1{display:flex;align-items:center;gap:6px}
+#ccBox .r1 .nm{flex:0 0 auto;font-size:10px;color:#79839a;background:#151a24;border:1px solid #232b3b;border-radius:5px;padding:1px 5px}
+#ccBox .r1 .gz{flex:0 0 auto;font-family:serif;font-size:17px;line-height:1.15;letter-spacing:.05em;color:#f0d9a8;white-space:nowrap}
+#ccBox .r1 .sg{flex:0 0 auto;font-size:11px;color:#9aa2b4}
+#ccBox .r1 .bd{margin-left:auto;flex:0 0 auto;font-size:11px;font-weight:600;border-radius:6px;padding:2px 6px;white-space:nowrap}
+#ccBox .bd.f{background:#0f2018;color:#6fd39b;border:1px solid #23503a}
+#ccBox .bd.s{background:#241417;color:#e08a7c;border:1px solid #4d2226}
+#ccBox .bd.n{background:#1a1d26;color:#9aa2b4;border:1px solid #2a3140}
+#ccBox .r2{font-size:10px;color:#5f6879;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#ccBox .r3{font-size:12.2px;color:#b9c0cf;display:flex;align-items:baseline;gap:8px}
+#ccBox .r3 .tx{flex:1 1 auto;min-width:0}
+#ccBox .r3 .cv{flex:0 0 auto;font-size:10px;color:#79839a;white-space:nowrap}
+#ccBox .tr{margin-top:6px;border-top:1px dashed #232b3b;padding-top:6px}
+#ccBox .trr{display:flex;gap:7px;font-size:11px;line-height:1.65;margin-bottom:4px}
+#ccBox .trr:last-child{margin-bottom:0}
+#ccBox .trr .c{flex:0 0 38px;color:#d9a441;font-weight:600}
+#ccBox .trr .x{flex:1 1 auto;min-width:0;color:#9aa2b4}
+/* 吸附条里的分段：体用 ｜ 层次。两页共用，所以不挂在 #ccBox 下 */
+.yunseg{flex:0 0 auto;display:flex;background:#0c0f16;border:1px solid #232b3b;border-radius:9px;padding:2px}
+.yunseg button{font:inherit;font-size:11.5px;padding:3px 9px;border-radius:7px;color:#79839a;background:none;border:1px solid transparent;min-height:26px;line-height:1.2}
+.yunseg button.on{background:#2a2416;color:#d9a441;border-color:#57461c}
+@media (max-width:380px){
+.yunseg button{padding:3px 7px;font-size:11px}
 }
 </style>
 </head>
@@ -1975,12 +2023,13 @@ var NHTJ = (function () {
   }
   /* ---------- 体用对照（R7 · 已登记 §14） ---------- */
   var TY_KEY = 'nhtj.v1.tiyong';
-  var TY = { recId: null, y0: null, expand: false };
+  var TY = { recId: null, y0: null, expand: false, seg: 'tiyong' };
   var TY_SPAN = 6;
   var WXCH = { '甲': '木', '乙': '木', '丙': '火', '丁': '火', '戊': '土', '己': '土', '庚': '金', '辛': '金', '壬': '水', '癸': '水' };
   function tyLoad() { try { var raw = localStorage.getItem(TY_KEY); if (!raw) return; var o = JSON.parse(raw); if (!o || typeof o !== "object") return;
-    TY.recId = o.recId || null; TY.y0 = o.y0 || null; } catch (e) {} }
-  function tySave() { try { localStorage.setItem(TY_KEY, JSON.stringify({ recId: TY.recId, y0: TY.y0 })); } catch (e) {} }
+    TY.recId = o.recId || null; TY.y0 = o.y0 || null;
+    TY.seg = (o.seg === 'cengci') ? 'cengci' : 'tiyong'; } catch (e) {} }
+  function tySave() { try { localStorage.setItem(TY_KEY, JSON.stringify({ recId: TY.recId, y0: TY.y0, seg: TY.seg })); } catch (e) {} }
   function dirCls(d) { return d === "顺" ? "f" : (d === "逆" ? "s" : "n"); }
   function dirWord(d) { return d === "顺" ? "顺势" : (d === "逆" ? "逆势" : "中性"); }
   /* 档案 → R7 需要的 chart 视图（R7.5 要 effective 与 pillars） */
@@ -2043,6 +2092,197 @@ var NHTJ = (function () {
     return h + "</div>";
   }
 
+  /* ---------- 层次对照（R7.7 · 已登记 §14） ---------- */
+  var CC = { t: null, openIdx: -1 };
+  var CC_STEP_MS = 7200000;
+  /* 长按连切参数（已批准）：按住 400ms 进入连切，前 5 次每 180ms 一次，之后加速到 80ms */
+  var CC_HOLD = { DELAY: 400, SLOW: 180, FAST: 80, N: 5, t1: null, t2: null, did: false };
+
+  function ccPd(ms) { var d = new Date(ms); return { Y: d.getUTCFullYear(), M: d.getUTCMonth() + 1, D: d.getUTCDate(), H: d.getUTCHours(), Mi: d.getUTCMinutes() }; }
+  function ccNowMs() { var nb = nowBeijing(); return Date.UTC(nb.y, nb.m - 1, nb.d, nb.hh, nb.mi, 0); }
+  function ccYmd(ms) { var p = ccPd(ms); return p.Y + '-' + pad2(p.M) + '-' + pad2(p.D); }
+  function ccHm(ms) { var p = ccPd(ms); return pad2(p.H) + ':' + pad2(p.Mi); }
+  function ccMdhm(ms) { var p = ccPd(ms); return pad2(p.M) + '-' + pad2(p.D) + ' ' + pad2(p.H) + ':' + pad2(p.Mi); }
+
+  /* 节气节点：12 个「节」（JIE 是 TERMS 的下标）。前后各取一年，保证 T 两侧都有邻居 */
+  function ccJieNodes(yy) {
+    var out = [], v, i, ms;
+    for (v = yy - 1; v <= yy + 1; v++) {
+      for (i = 0; i < NHTJ.JIE.length; i++) {
+        ms = NHTJ.termMs(v, NHTJ.JIE[i]);
+        if (ms !== null && ms !== undefined) out.push({ ms: ms, ti: NHTJ.JIE[i], name: NHTJ.TERMS[NHTJ.JIE[i]] });
+      }
+    }
+    out.sort(function (a, b) { return a.ms - b.ms; });
+    return out;
+  }
+  function ccBracket(list, ms) {
+    var lo = null, nx = null, i;
+    for (i = 0; i < list.length; i++) { if (list[i].ms <= ms) lo = list[i]; if (list[i].ms > ms && !nx) nx = list[i]; }
+    return { start: lo, next: nx };
+  }
+  /* R1.3 方案 A：23:00 换日 */
+  function ccDayBounds(ms) {
+    var p = ccPd(ms), st = Date.UTC(p.Y, p.M - 1, p.D, 23, 0, 0);
+    if (p.H < 23) st -= 86400000;
+    return { start: st, end: st + 86400000 };
+  }
+  /* R1.4：子时自 23:00 起，每两小时一个时辰 */
+  function ccHourBounds(ms) {
+    var p = ccPd(ms), idx = Math.floor(((p.H + 1) % 24) / 2), sh = (idx * 2 + 23) % 24;
+    var st = Date.UTC(p.Y, p.M - 1, p.D, sh, 0, 0);
+    if (sh > p.H) st -= 86400000;
+    return { start: st, end: st + CC_STEP_MS, idx: idx };
+  }
+  /* 费力程度 → 左边框色阶（R7.3）：顺势 lv1–4、逆势 lv0、中性 lvn */
+  function ccLvClass(j) { return j.dir === '逆' ? 'lv0' : (j.dir === '中' ? 'lvn' : 'lv' + j.lv); }
+
+  /* R7.7 五层：输入同一时刻，输出五个层次各自的方向。
+     判定一路走 R7.1 → R7.2 → R7.3，不为任何一层另立规则；只取天干层（R7.6）。
+     纯函数——自检直接调它验说明书里登记的算例。 */
+  function cengciLevels(pf, ch, lk, segs, T) {
+    var p = ccPd(T);
+    var c = NHTJ.computeChart({ y: p.Y, m: p.M, d: p.D, hh: p.H, mi: p.Mi });
+    if (!c.ok) return null;
+    var P = c.pillars, out = [], band = pf.strength.band, i;
+    var seg = NHTJ.r7At(segs, T) || segs[0];
+    var jn = ccJieNodes(p.Y), lc = null, nx = null;
+    for (i = 0; i < jn.length; i++) {
+      if (jn[i].ti === 2) { if (jn[i].ms <= T) lc = jn[i]; if (jn[i].ms > T && !nx) nx = jn[i]; }
+    }
+    var mb = ccBracket(jn, T), db = ccDayBounds(T), hb = ccHourBounds(T);
+    var L;
+    L = { nm: '大限', gz: seg.gz, gan: String(seg.gz).charAt(0), src: 'R7.5 + R4', seg: seg,
+          sub: '大运 · ' + NHTJ.r7FmtMs(seg.startMs) + ' ~ ' + NHTJ.r7FmtMs(seg.endMs), tr: [] };
+    L.tr.push(['R4', '起运：' + (lk.yangYear ? '年干为阳' : '年干为阴') + '、' + (pf.gender === 'female' ? '女' : '男') + '命' + (lk.forward ? '顺排' : '逆排') + '，数到' + (lk.forward ? '下一个' : '上一个') + '节「' + lk.targetName + '」，偏移 ' + lk.years + ' 年 ' + lk.months + ' 个月 ' + lk.days.toFixed(2) + ' 天']);
+    L.tr.push(['R7.5', '第 n 段 = 起运时刻 + n×10 年 → 此刻在第 ' + seg.i + ' 段 ' + seg.gz + '（' + NHTJ.r7FmtMs(seg.startMs) + ' ~ ' + NHTJ.r7FmtMs(seg.endMs) + '）']);
+    out.push(L);
+    L = { nm: '流年', gz: P.year.gz, gan: String(P.year.gz).charAt(0), src: 'R1.1',
+          sub: '立春 ' + ccYmd(lc.ms) + ' ' + ccHm(lc.ms) + ' ~ ' + ccYmd(nx.ms) + ' ' + ccHm(nx.ms), tr: [] };
+    L.tr.push(['R1.1', '年柱以立春为界、不是元旦：' + ccMdhm(lc.ms) + ' 起为 ' + P.year.gz + ' → 流年 ' + P.year.gz]);
+    out.push(L);
+    L = { nm: '流月', gz: P.month.gz, gan: String(P.month.gz).charAt(0), src: 'R1.2',
+          sub: '节 ' + mb.start.name + ' ' + ccMdhm(mb.start.ms) + ' ~ ' + mb.next.name + ' ' + ccMdhm(mb.next.ms), tr: [] };
+    L.tr.push(['R1.2', '月柱以「节」换月、不是农历初一：' + mb.start.name + ' ' + ccMdhm(mb.start.ms) + ' 起为 ' + P.month.gz + ' → 流月 ' + P.month.gz]);
+    out.push(L);
+    L = { nm: '流日', gz: P.day.gz, gan: String(P.day.gz).charAt(0), src: 'R1.3',
+          sub: ccMdhm(db.start) + ' ~ ' + ccMdhm(db.end) + ' · 23:00 换日', tr: [] };
+    L.tr.push(['R1.3', '方案 A：23:00 换日 → 流日 ' + P.day.gz + ' 覆盖 ' + ccMdhm(db.start) + ' ~ ' + ccMdhm(db.end) + '；日柱 = (JDN+49) mod 60']);
+    out.push(L);
+    L = { nm: '流时', gz: P.hour.gz, gan: String(P.hour.gz).charAt(0), src: 'R1.4',
+          sub: ccHm(hb.start) + ' ~ ' + ccHm(hb.end) + ' · ' + NHTJ.ZHI.charAt(hb.idx) + '时', tr: [] };
+    L.tr.push(['R1.4', '时柱：' + NHTJ.ZHI.charAt(hb.idx) + '时（' + ccHm(hb.start) + '~' + ccHm(hb.end) + '）；日干 ' + pf.dayGan + ' 起五鼠遁 → ' + P.hour.gz]);
+    out.push(L);
+    for (i = 0; i < out.length; i++) {
+      var o = out[i];
+      o.god = NHTJ.tenGod(pf.dayGan, o.gan);
+      o.j = NHTJ.r7Judge(pf.dayGan, o.gan, band);
+      o.tr.push(['R7.1', '天干 ' + o.gan + ' → 日主' + pf.dayGan + '见' + o.gan + ' = ' + o.god + ' → A 层 ' + o.j.A + '（' + o.j.A_src + '）']);
+      o.tr.push(['R7.2', 'B 层：' + o.j.B_why + '（档位判据来自 R5.2.0，S 值不外露）']);
+      o.tr.push(['R7.3', '合成：A ' + o.j.A + ' + B ' + o.j.B + ' → ' + o.j.key + '（' + (o.j.lvName ? '费力程度 ' + o.j.lvName : '逆势／中性不参与色阶') + '）']);
+      o.tr.push(['R7.6', '只判天干层；地支层留 R8、取法未定']);
+    }
+    return out;
+  }
+  function cengciCount(L) {
+    var n = { f: 0, s: 0, n: 0 }, i;
+    for (i = 0; i < L.length; i++) { if (L[i].j.dir === '顺') n.f++; else if (L[i].j.dir === '逆') n.s++; else n.n++; }
+    return n;
+  }
+
+  /* 吸附条：体用页与层次页共用（withAnch 决定要不要「体 ｜ 用」锚点） */
+  function yunSegHTML() {
+    return '<span class="yunseg" id="yunSeg">' +
+      '<button type="button" data-sg="tiyong"' + (TY.seg === 'cengci' ? '' : ' class="on"') + '>体用</button>' +
+      '<button type="button" data-sg="cengci"' + (TY.seg === 'cengci' ? ' class="on"' : '') + '>层次</button></span>';
+  }
+  function yunBarHTML(list, rec, pf, ch, segs, lk, withAnch) {
+    var b = pf.birth || {};
+    var h = '<div class="qbar"><span class="wdot">运</span>' +
+      '<button class="qhd" id="tyTog" type="button" aria-expanded="' + (TY.expand ? 'true' : 'false') + '">' +
+      '<span class="qname">' + esc(pf.name) + '<i>' + esc(String(pf.ganzhi).split(' ')[2] || '') + '日 · 日主' + esc(pf.dayGan) + ' · ' + esc(pf.strength.band) + '</i></span>' +
+      '<span class="qcaret">▾</span></button>' +
+      yunSegHTML() +
+      (withAnch ? '<span class="anch"><button type="button" data-anch="body" class="on">体</button><button type="button" data-anch="use">用</button></span>' : '') +
+      '</div>';
+    h += '<div class="qexpand' + (TY.expand ? ' on' : '') + '">' +
+      '<dl class="kv">' +
+      '<dt>性别</dt><dd>' + (pf.gender === 'female' ? '女' : '男') + '</dd>' +
+      '<dt>出生</dt><dd>' + (b.y || '?') + '-' + pad2(b.m || 0) + '-' + pad2(b.d || 0) + ' ' + pad2(b.hh || 0) + ':' + pad2(b.mi || 0) + (b.trueSolar ? ' · 真太阳时已开' : ' · 北京时间') + '</dd>' +
+      '<dt>四柱</dt><dd class="qgz">' + esc(pf.ganzhi) + '</dd>' +
+      '<dt>起运</dt><dd>' + esc(NHTJ.r7FmtMs(segs[0].startMs)) + '（R4 偏移 ' + lk.years + ' 年 ' + lk.months + ' 月 ' + lk.days.toFixed(2) + ' 天 → R7.5 切段）</dd>' +
+      '</dl>' +
+      '<label class="field"><span>切换命主</span><select id="tyRec">' +
+      list.map(function (r) { return '<option value="' + esc(r.id) + '"' + (r.id === TY.recId ? ' selected' : '') + '>' + esc(r.name) + '　' + esc((r.chart && r.chart.ganzhi) || '（无四柱）') + '</option>'; }).join('') +
+      '</select></label></div>';
+    return h;
+  }
+
+  /* 层次页：同一刻五层并排（只并排，不做权重） */
+  function renderCengci(box, list, rec, pf, ch, segs, lk) {
+    var T = (CC.t === null) ? ccNowMs() : CC.t;
+    var L = cengciLevels(pf, ch, lk, segs, T);
+    if (!L) { box.innerHTML = '<div class="card"><div class="h2">流运对照 · 层次</div><div class="empty">这个时刻算不出来（R1.1／R1.3／R1.4）。</div></div>'; return; }
+    var n = cengciCount(L);
+    var h = '<div id="ccBox">';
+    h += yunBarHTML(list, rec, pf, ch, segs, lk, false);
+    h += '<div class="card"><div class="momrow">' +
+      '<button class="step" id="ccPrev" type="button" aria-label="前一个时辰">&#8249;</button>' +
+      '<span class="mtime">' + ccYmd(T) + ' ' + ccHm(T) + '</span>' +
+      '<span class="mzh">' + NHTJ.ZHI.charAt(ccHourBounds(T).idx) + '时</span>' +
+      '<button class="step" id="ccNext" type="button" aria-label="后一个时辰">&#8250;</button>' +
+      '<button class="nowbtn" id="ccNow" type="button">现在</button></div>' +
+      '<div class="dist">五层速览：<b class="f">顺势 ' + n.f + '</b> · <b class="s">逆势 ' + n.s + '</b> · <b class="n">中性 ' + n.n + '</b></div>' +
+      '<div class="dsub">各层独立判定，不做加权汇总</div>' +
+      '<div class="dsub" style="margin-top:4px">时刻轴＝北京时间。R2 的真太阳时修正是对「出生时刻」做的（输入是出生地经度），不套到「此刻」——套上去等于假设你还住在出生地。按住 ‹ › 可连续切换时辰。</div></div>';
+    h += '<div class="card"><div class="h2">同一刻 · 五层并排<span class="rt" style="margin-left:auto;font-size:10.5px;color:#5f6879;font-weight:400">点任意一层看它的算法来路</span></div>';
+    for (var i = 0; i < L.length; i++) {
+      var o = L[i], j = o.j;
+      h += '<div class="lyr ' + ccLvClass(j) + '" data-i="' + i + '">' +
+        '<div class="r1"><span class="nm">' + esc(o.nm) + '</span><span class="gz">' + esc(o.gz) + '</span><span class="sg">' + esc(o.god) + '</span>' +
+        '<span class="bd ' + dirCls(j.dir) + '">' + esc(j.key) + '</span></div>' +
+        '<div class="r2">' + esc(o.sub) + '</div>' +
+        '<div class="r3"><span class="tx">' + esc(NHTJ.r7Line(j)) + '</span><span class="cv">' + (CC.openIdx === i ? '收起 ▲' : '追溯 ▾') + '</span></div>';
+      if (CC.openIdx === i) {
+        h += '<div class="tr">' + o.tr.map(function (r) { return '<div class="trr"><span class="c">' + esc(r[0]) + '</span><span class="x">' + esc(r[1]) + '</span></div>'; }).join('') + '</div>';
+      }
+      h += '</div>';
+    }
+    h += '</div>';
+    h += '<div class="card"><div class="h2">这一页做什么、不做什么</div><div class="src" style="margin-bottom:0">' +
+      '做：把同一刻的五个层次并排放出来，各自给一个方向，每条都能点开追到算法。<br>' +
+      '不做：不判断「大限压流年」还是「流年压大限」。各流派分歧大，本版不给权重——方向摆出来，判断权交给你（R7.7 / R7.6）。<br>' +
+      '判定范围：只取天干层。地支层留 R8，取法（本气 vs 藏干全取）未定。<br>' +
+      'R7.1 出处：' + esc(NHTJ.R7_QUOTE) + '；偏印归逆用为本工具据徐乐吾评注的扩展。</div></div>';
+    var tr = [
+      ['R7.7', '五层判定与 R7 完全同一套逻辑（A 层 → B 层 → 九格合成），不为任何一层另立规则', '输入是各层天干，来源逐条标注：大限 R7.5／流年 R1.1／流月 R1.2／流日 R1.3／流时 R1.4'],
+      ['R7.7', '合参方式：只并排，不做权重', '不判断「大限压流年」还是「流年压大限」——各流派分歧显著，本版不给结论'],
+      ['R5.2.0', '日主强弱：' + NHTJ.strengthLine(pf.strength), 'B 层判据用档位、不用 S 值；S 值不外露'],
+      ['R7.6', '本版只判五个层次的天干层', '地支层留 R8，且取法未定'],
+      ['R1.1', '流年干支：按立春分界，年柱 (年−4) mod 60', '当前流年 ' + L[1].gz + '（' + L[1].sub + '）'],
+      ['R1.2', '月柱以「节」换月', '当前流月 ' + L[2].gz + '（' + L[2].sub + '）'],
+      ['R1.3', '日柱 = (JDN+49) mod 60；方案 A：23:00 换日', '当前流日 ' + L[3].gz + '（' + L[3].sub + '）'],
+      ['R1.4', '时柱：日干起五鼠遁', '当前流时 ' + L[4].gz + '（' + L[4].sub + '）'],
+      ['R7.5', '大运切段：第 n 段 = 起运时刻 + n×10 年', '当前大限 ' + L[0].gz + '（第 ' + L[0].seg.i + ' 段，' + NHTJ.r7FmtMs(L[0].seg.startMs) + ' 起算）']
+    ];
+    h += '<div class="card tracecard"><div class="h2">追溯 · 这五层怎么推出来的</div>' +
+      tr.map(function (r) { return '<div class="trow"><span class="rid">' + r[0] + '</span><span class="rbody">' + esc(r[1]) + '<span>' + esc(r[2]) + '</span></span></div>'; }).join('') + '</div>';
+    h += '<div class="note">不做断言，只做趋势提示：R7.7 说的是「此刻这五层各在什么位置」，不给「听哪一层」的结论，也不预测结果。</div>';
+    h += '</div>';
+    box.innerHTML = h;
+  }
+  function ccStep(dir) { CC.t = ((CC.t === null) ? ccNowMs() : CC.t) + dir * CC_STEP_MS; CC.openIdx = -1; renderTiyong(); }
+  function ccStopHold() { if (CC_HOLD.t1) { clearTimeout(CC_HOLD.t1); CC_HOLD.t1 = null; } if (CC_HOLD.t2) { clearInterval(CC_HOLD.t2); CC_HOLD.t2 = null; } }
+  function ccHoldFire(dir) {
+    ccStopHold();
+    CC_HOLD.did = false;
+    CC_HOLD.t1 = setTimeout(function () {
+      var k = 0;
+      CC_HOLD.did = true;
+      ccStep(dir);
+      CC_HOLD.t2 = setInterval(function () { k++; ccStep(dir); }, k < CC_HOLD.N ? CC_HOLD.SLOW : CC_HOLD.FAST);
+    }, CC_HOLD.DELAY);
+  }
   function renderTiyong() {
     var box = $("#tyBox");
     if (!box) return;
@@ -2085,24 +2325,11 @@ var NHTJ = (function () {
     var luckNow = null, yearNow = null;
     entries.forEach(function (e) { if (e.kind === "luck" && !luckNow) luckNow = e; if (e.kind === "year" && e.y === y0) yearNow = e; });
     if (!luckNow || !yearNow) { box.innerHTML = "<div class=\"card\"><div class=\"h2\">流运对照 · 体用</div><div class=\"empty\">这一年的流运算不出来（R1.1／R7.5）。</div></div>"; return; }
+    if (TY.seg === 'cengci') { renderCengci(box, list, rec, pf, ch, segs, lk); return; }
     var b = pf.birth || {};
     var h = "";
     /* ---- 吸附条 ---- */
-    h += "<div class=\"qbar\"><span class=\"wdot\">运</span>" +
-      "<button class=\"qhd\" id=\"tyTog\" type=\"button\" aria-expanded=\"" + (TY.expand ? "true" : "false") + "\">" +
-      "<span class=\"qname\">" + esc(pf.name) + "<i>" + esc(pf.ganzhi.split(" ")[2] || "") + "日 · 日主" + esc(pf.dayGan) + " · " + esc(pf.strength.band) + "</i></span>" +
-      "<span class=\"qcaret\">▾</span></button>" +
-      "<span class=\"anch\"><button type=\"button\" data-anch=\"body\" class=\"on\">体</button><button type=\"button\" data-anch=\"use\">用</button></span></div>";
-    h += "<div class=\"qexpand" + (TY.expand ? " on" : "") + "\">" +
-      "<dl class=\"kv\">" +
-      "<dt>性别</dt><dd>" + (pf.gender === "female" ? "女" : "男") + "</dd>" +
-      "<dt>出生</dt><dd>" + (b.y || "?") + "-" + pad2(b.m || 0) + "-" + pad2(b.d || 0) + " " + pad2(b.hh || 0) + ":" + pad2(b.mi || 0) + (b.trueSolar ? " · 真太阳时已开" : " · 北京时间") + "</dd>" +
-      "<dt>四柱</dt><dd class=\"qgz\">" + esc(pf.ganzhi) + "</dd>" +
-      "<dt>起运</dt><dd>" + esc(NHTJ.r7FmtMs(segs[0].startMs)) + "（R4 偏移 " + lk.years + " 年 " + lk.months + " 月 " + lk.days.toFixed(2) + " 天 → R7.5 切段）</dd>" +
-      "</dl>" +
-      "<label class=\"field\"><span>切换命主</span><select id=\"tyRec\">" +
-      list.map(function (r) { return "<option value=\"" + esc(r.id) + "\"" + (r.id === TY.recId ? " selected" : "") + ">" + esc(r.name) + "　" + esc((r.chart && r.chart.ganzhi) || "（无四柱）") + "</option>"; }).join("") +
-      "</select></label></div>";
+    h += yunBarHTML(list, rec, pf, ch, segs, lk, true);
     /* ---- 本命底色（体 · 常量） ---- */
     var gans = ["year", "month", "day", "hour"].map(function (k) { return NHTJ.tenGod(pf.dayGan, String(ch.pillars[k].gz).charAt(0)); });
     var zhis = ["year", "month", "day", "hour"].map(function (k) { return NHTJ.tenGod(pf.dayGan, NHTJ.BENQI_OF[String(ch.pillars[k].gz).charAt(1)]); });
@@ -2184,6 +2411,15 @@ var NHTJ = (function () {
     box.addEventListener("click", function (ev) {
       var el = ev.target;
       if (!el || !el.closest) return;
+      /* 分段：体用 ｜ 层次（R7.7：默认体用） */
+      var sg = el.closest("#yunSeg [data-sg]");
+      if (sg) { TY.seg = (sg.getAttribute("data-sg") === "cengci") ? "cengci" : "tiyong"; CC.openIdx = -1; ccStopHold(); tySave(); renderTiyong(); return; }
+      /* 层次页：时刻切换 / 现在 / 展开某一层的追溯 */
+      if (el.closest("#ccNow")) { ccStopHold(); CC.t = null; CC.openIdx = -1; renderTiyong(); return; }
+      if (el.closest("#ccPrev")) { if (!CC_HOLD.did) ccStep(-1); CC_HOLD.did = false; return; }
+      if (el.closest("#ccNext")) { if (!CC_HOLD.did) ccStep(1); CC_HOLD.did = false; return; }
+      var ly = el.closest(".lyr");
+      if (ly) { var lix = parseInt(ly.getAttribute("data-i"), 10); CC.openIdx = (CC.openIdx === lix ? -1 : lix); renderTiyong(); return; }
       if (el.closest("#tyTog")) { TY.expand = !TY.expand; renderTiyong(); return; }
       if (el.closest("#tyYr")) {
         var nb = nowBeijing(), cur = TY.y0 || nb.y;
@@ -2202,6 +2438,17 @@ var NHTJ = (function () {
       var t = ev.target;
       if (t && t.id === "tyRec") { TY.recId = t.value; tySave(); renderTiyong(); }
     });
+    box.addEventListener("pointerdown", function (ev) {
+      var el = ev.target;
+      if (!el || !el.closest) return;
+      if (el.closest("#ccPrev")) { ccHoldFire(-1); return; }
+      if (el.closest("#ccNext")) { ccHoldFire(1); return; }
+    });
+    if (!bindTiyong.docHooked) {
+      bindTiyong.docHooked = true;
+      document.addEventListener("pointerup", ccStopHold);
+      document.addEventListener("pointercancel", ccStopHold);
+    }
   }
 
   /* ---------- 复盘对照（R9 · 已登记 §16） ---------- */
@@ -2324,7 +2571,18 @@ var NHTJ = (function () {
     if (!rows) return null;
     return { rows: rows, traceRef: ['R7.1', 'R7.2', 'R7.3', 'R7.5'] };
   }
-  var NOW_FN = { benming: nowBenming, jinri: nowJinri, zeri: nowZeri, tiyong: nowTiyong };
+  /* 右侧重算只用快照里的出生信息（R9.3）——和体用同一口径 */
+  function nowCengci(s) {
+    var pf = profileOfSnap(s); if (!pf) return null;
+    var b = s.birthSnapshot || {};
+    var chartLike = { ok: true, pillars: b.pillars, effective: b.effective };
+    var lk = NHTJ.computeLuck(chartLike, pf.gender); if (!lk) return null;
+    var segs = NHTJ.r7Segments(chartLike, lk, 8);
+    var t = s.target || {};
+    var T = Date.UTC(t.y || 2000, (t.m || 1) - 1, t.d || 1, t.hh || 0, t.mi || 0, 0);
+    return cengciRowsFrom(pf, chartLike, lk, segs, T);
+  }
+  var NOW_FN = { benming: nowBenming, jinri: nowJinri, zeri: nowZeri, tiyong: nowTiyong, cengci: nowCengci };
 
   /* 四类快照的「存下这一屏」 */
   function snapForPaipan() {
@@ -2377,11 +2635,36 @@ var NHTJ = (function () {
     return mkSnap('tiyong', got.rec, { y0: y0, place: got.rec.place || '' }, rows,
       y0 + ' 起 ' + TY_SPAN + ' 年 · 大运与流年', ['R7.1', 'R7.2', 'R7.3', 'R7.5'], { y: y0, m: 1, d: 1, hh: 0, mi: 0 });
   }
+  /* 层次快照（R7.7）：存的是「某一刻」的五层并排，所以 target 精确到分钟 */
+  function cengciRowsFrom(pf, chartLike, lk, segs, T) {
+    var L = cengciLevels(pf, chartLike, lk, segs, T);
+    if (!L) return null;
+    var rows = [{ k: '时刻', v: ccYmd(T) + ' ' + ccHm(T) + ' · ' + NHTJ.ZHI.charAt(ccHourBounds(T).idx) + '时（北京时间）', fix: true }];
+    for (var i = 0; i < L.length; i++) rows.push({ k: L[i].nm, v: L[i].gz + ' · ' + L[i].j.key, vary: true });
+    var n = cengciCount(L);
+    rows.push({ k: '速览', v: '顺势 ' + n.f + ' · 逆势 ' + n.s + ' · 中性 ' + n.n, vary: true });
+    return { rows: rows, traceRef: ['R7.7', 'R7.1', 'R7.2', 'R7.3', 'R7.5', 'R1.1', 'R1.2', 'R1.3', 'R1.4', 'R7.6'] };
+  }
+  function snapForCengci() {
+    var got = pickRec();
+    if (!got) { toast('没有含四柱的档案。先到「排盘」页建一个命主'); return null; }
+    var ch = tyChartOf(got.rec);
+    if (!ch) { toast('这条档案缺起运基准（旧版），无法存层次快照'); return null; }
+    var lk = NHTJ.computeLuck(ch, got.pf.gender);
+    if (!lk) { toast('算不出大运（R4），无法存快照'); return null; }
+    var segs = NHTJ.r7Segments(ch, lk, 8);
+    var T = (CC.t === null) ? ccNowMs() : CC.t;
+    var r = cengciRowsFrom(got.pf, ch, lk, segs, T);
+    if (!r) { toast('这个时刻算不出五层，无法存快照'); return null; }
+    var pd = ccPd(T);
+    return mkSnap('cengci', got.rec, { place: got.rec.place || '' }, r.rows,
+      ccYmd(T) + ' ' + ccHm(T) + ' · 五层', r.traceRef, { y: pd.Y, m: pd.M, d: pd.D, hh: pd.H, mi: pd.Mi });
+  }
   function onSnap() {
     var t = activeTab();
     if (t === 'compare' && CMP.seg === 'fupan') { toast('复盘页不产生新快照——快照在「今日」「择日」「体用」页存'); return; }
     var snap = (t === 'compare') ? snapForZeri()
-             : (t === 'tiyong') ? snapForTiyong()
+             : (t === 'tiyong') ? (TY.seg === 'cengci' ? snapForCengci() : snapForTiyong())
              : (t === 'today') ? snapForToday()
              : (t === 'paipan') ? snapForPaipan() : null;
     if (!snap) { if (t !== 'paipan' && t !== 'today' && t !== 'compare' && t !== 'tiyong') toast('这一页没有可存的快照'); return; }
@@ -2420,8 +2703,8 @@ var NHTJ = (function () {
     var snaps = listSnaps().slice().sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
     if (!snaps.length) {
       box.innerHTML = '<div class="card"><div class="h2">流运对照 · 复盘</div><div class="empty">' + (recs.length
-        ? '还没有任何快照。<br><br>快照是<b>手动存</b>的——到「今日」「择日」「体用」任意一页，点<b>右上角「存下这一屏」</b>，就会把那一屏的原始结论原样存下来。<br><br>存下来之后，这一页会把「当时存下的」和「今天用当前规则对同一目标重算的」并排摆出来，判断权交给你。'
-        : '还没有档案。<br>先到「排盘」页建立第一个命主，再去「今日」「择日」「体用」页点右上角「存下这一屏」。') + '</div></div>';
+        ? '还没有任何快照。<br><br>快照是<b>手动存</b>的——到「今日」「择日」「体用」「层次」任意一页，点<b>右上角「存下这一屏」</b>，就会把那一屏的原始结论原样存下来。<br><br>存下来之后，这一页会把「当时存下的」和「今天用当前规则对同一目标重算的」并排摆出来，判断权交给你。'
+        : '还没有档案。<br>先到「排盘」页建立第一个命主，再去「今日」「择日」「体用」「层次」页点右上角「存下这一屏」。') + '</div></div>';
       return;
     }
     var s = null, i;
@@ -2929,6 +3212,66 @@ var NHTJ = (function () {
         detail: 'msg=null → ' + (optOk ? '不抛、照常返回' : '抛了') +
                 '；消息对象一 toString 就抛 → ' + (threw ? '错误逃出来了（会递归白屏）' : '已被处理器吃掉') +
                 '；空字符串页签名 → ' + (emptyOk ? '不抛' : '抛了')
+      });
+    })();
+    /* 应用层冒烟（§12.7）：引擎自检跑在引擎作用域里，够不到渲染层——「函数改名忘同步」这类错它看不见 */
+    (function () {
+      var ch = null, rec = null, pf = null, cl = null, lk = null, segs = null, L = null, n = null;
+      var boom = '', box = null, htmlLen = 0;
+      try {
+        ch = NHTJ.computeChart({ y: 1982, m: 4, d: 1, hh: 7, mi: 0 });
+        rec = { id: 'selftest-c', name: '示例·丙', gender: 'male',
+                chart: { ganzhi: ch.ganzhi, pillars: ch.pillars, effective: ch.effective },
+                birth: { y: 1982, m: 4, d: 1, hh: 7, mi: 0, tz: 'Asia/Shanghai', trueSolar: false, lonDeg: null } };
+        pf = NHTJ.profileOf(rec);
+        cl = { ok: true, pillars: ch.pillars, effective: ch.effective };
+        lk = NHTJ.computeLuck(cl, 'male');
+        segs = NHTJ.r7Segments(cl, lk, 8);
+        L = cengciLevels(pf, cl, lk, segs, Date.UTC(2026, 8, 16, 16, 0, 0));
+        n = cengciCount(L);
+        box = document.createElement('div');
+        renderCengci(box, [rec], rec, pf, cl, segs, lk);
+        htmlLen = (box.innerHTML || '').length;
+      } catch (e) { boom = String((e && e.message) || e); }
+      var want = ['戊申·偏财·顺势·发力','丙午·食神·顺势·发力','丁酉·伤官·顺势·借力啃硬','癸巳·正印·逆势·先扶不接','庚申·七杀·顺势·借力啃硬'];
+      var got = L ? L.map(function (o) { return o.gz + '·' + o.god + '·' + o.j.key; }) : [];
+      out.push({
+        name: 'R7.7 五层算例：示例·丙 2026-09-16 16:00（申时）→ 五层各自的干支／十神／方向',
+        pass: !boom && got.length === 5 && got.join('｜') === want.join('｜') && n && n.f === 4 && n.s === 1 && n.n === 0,
+        detail: boom ? ('抛错：' + boom) : ('实际 ' + got.join('｜') + '；速览 顺势 ' + n.f + ' · 逆势 ' + n.s + ' · 中性 ' + n.n + '（应为 4／1／0）')
+      });
+      out.push({
+        name: '应用层冒烟：renderCengci 用真实命主渲染一次不抛错（§12.7 待办）',
+        pass: !boom && htmlLen > 2000,
+        detail: boom ? ('抛错：' + boom) : ('渲染出 ' + htmlLen + ' 字符；五层列表与追溯块都在')
+      });
+    })();
+    /* CSS 完整性守卫：线上曾因一个缺失的 </style>，让下一个 <style> 被当成前一块的文本、整条规则被静默丢弃 */
+    (function () {
+      var styleEls = document.querySelectorAll('style');
+      var nSheet = 0, bad = [], swallowed = [], i, j, why = '';
+      try {
+        for (i = 0; i < styleEls.length; i++) {
+          if ((styleEls[i].textContent || '').indexOf('<style') >= 0) swallowed.push(styleEls[i].id || ('第 ' + (i + 1) + ' 块'));
+        }
+        for (i = 0; i < document.styleSheets.length; i++) {
+          var rs = null;
+          try { rs = document.styleSheets[i].cssRules; } catch (e) { continue; }
+          if (!rs) continue;
+          nSheet++;
+          for (j = 0; j < rs.length; j++) {
+            var st = rs[j] && rs[j].selectorText;
+            if (st && st.indexOf('<') >= 0) bad.push(st.slice(0, 70));
+          }
+        }
+      } catch (e) { why = String((e && e.message) || e); }
+      out.push({
+        name: 'CSS 完整性：没有哪个 <style> 块把下一个 <style> 当成自己的文本吞掉（＝少写了一个 </style>），且已解析规则里没有带「<」的 selector',
+        pass: !why && !swallowed.length && !bad.length && nSheet === styleEls.length,
+        detail: why ? ('遍历时抛错：' + why)
+              : ('<style> ' + styleEls.length + ' 块／已解析 ' + nSheet + ' 张；' +
+                 (swallowed.length ? ('被吞的块：' + swallowed.join('、') + ' ——它内部的规则会整条消失，页面元素却还在') : '无被吞的块') + '；' +
+                 (bad.length ? ('被污染的 selector：' + bad.join(' ｜ ')) : '无带「<」的 selector'))
       });
     })();
     return out;
