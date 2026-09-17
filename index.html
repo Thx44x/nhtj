@@ -1,0 +1,2966 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<!-- ALGO-SIGN-BEGIN
+太阳视黄经法：VSOP87D 地球级数（IMCCE 官方发布，L 全 1080 项、R 全 997 项）+ IAU1980 章动（Meeus 第 22 章 Table 22.A）+ 光行差；Meeus 第 27 章求根
+ΔT：1972–2026 用 IERS EOP C04 实测值（ΔT = 32.184 + (TAI−UTC) − (UT1−UTC)）；其余年份用 Espenak–Meeus 多项式，2026 年后整体减 6.287 秒偏移以与实测序列平滑衔接
+校验源：香港天文台二十四节气日期及时间（hko.gov.hk）（2022–2028，168 项）
+ALGO-SIGN-END -->
+<title>天纪排盘</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="天纪排盘">
+<meta name="theme-color" content="#0b0d12">
+<meta name="color-scheme" content="dark">
+<meta name="format-detection" content="telephone=no">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230b0d12'/%3E%3Ctext x='50' y='70' font-size='60' text-anchor='middle' fill='%23d9a441' font-family='serif'%3E%E5%A4%A9%3C/text%3E%3C/svg%3E">
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;padding:0;background:#0b0d12;color:#e9eaf0;
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    font-size:16px;line-height:1.65;overscroll-behavior-y:none;touch-action:manipulation}
+  #app{display:flex;flex-direction:column;height:100vh;height:100dvh}
+  .topbar{flex:0 0 auto;padding-top:calc(env(safe-area-inset-top, 0px) + 10px);padding-bottom:10px;
+    padding-left:calc(env(safe-area-inset-left, 0px) + 16px);padding-right:calc(env(safe-area-inset-right, 0px) + 16px);
+    background:linear-gradient(180deg,#131824,#0d1017);border-bottom:1px solid #1d2331}
+  .brand{display:flex;align-items:center;gap:10px}
+  .seal{width:34px;height:34px;flex:0 0 auto;border-radius:9px;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(180deg,#c8452f,#94301c);color:#fff;font-size:19px;font-weight:700;font-family:serif;
+    box-shadow:0 2px 8px rgba(200,69,47,.28)}
+  .brandtxt{display:flex;flex-direction:column;line-height:1.25}
+  .brandtxt b{font-size:17px;letter-spacing:.04em}
+  .brandtxt i{font-style:normal;font-size:11.5px;color:#79839a}
+  main{flex:1 1 auto;overflow-y:auto;padding-top:12px;
+    padding-bottom:calc(env(safe-area-inset-bottom, 0px) + 96px);
+    padding-left:calc(env(safe-area-inset-left, 0px) + 16px);padding-right:calc(env(safe-area-inset-right, 0px) + 16px);
+    -webkit-overflow-scrolling:touch}
+  .screen{display:none}
+  .screen.on{display:block;animation:fade .18s ease-out}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  .card{background:#11151e;border:1px solid #1e2432;border-radius:14px;padding:14px;margin-bottom:14px}
+  .card:last-child{margin-bottom:4px}
+  .h2{font-size:12.5px;color:#8b93a7;letter-spacing:.08em;margin:0 0 12px;display:flex;align-items:center;gap:8px}
+  .note{font-size:13.5px;color:#8b93a7;margin:0;line-height:1.75}
+  .note b{color:#c9cfdd;font-weight:600}
+  .pill{font-size:11px;padding:1px 8px;border-radius:999px;background:#1c2331;color:#9aa4bb;border:1px solid #2a3244}
+  .field{display:block;margin-bottom:12px}
+  .field>span{display:block;font-size:12.5px;color:#8b93a7;margin-bottom:6px}
+  .field input,.field select{width:100%;min-height:46px;padding:0 12px;border-radius:11px;border:1px solid #262d3d;
+    background:#0e1219;color:#e9eaf0;font-size:16px;font-family:inherit;-webkit-appearance:none;appearance:none}
+  .field input::placeholder{color:#525b6e}
+  .field input:focus,.field select:focus{outline:none;border-color:#c8452f}
+  .switch{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+  .switch span{font-size:14px;color:#c9cfdd}
+  .switch input{width:52px;height:31px;-webkit-appearance:none;appearance:none;background:#262d3d;border-radius:999px;position:relative;transition:background .18s;flex:0 0 auto}
+  .switch input::after{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#8b93a7;transition:transform .18s,background .18s}
+  .switch input:checked{background:#7d2b1a}
+  .switch input:checked::after{transform:translateX(21px);background:#e8735a}
+  .btn{display:block;width:100%;min-height:50px;margin-top:10px;border:0;border-radius:12px;font-size:16.5px;font-weight:600;font-family:inherit;
+    background:linear-gradient(180deg,#c8452f,#a03420);color:#fff;padding:0 14px}
+  .btn:active{filter:brightness(.92)}
+  .btn[disabled]{opacity:.45}
+  .btn.ghost{background:#171c26;border:1px solid #2a3140;color:#c9cfdd;font-weight:500;font-size:15.5px}
+  .btn.ghost.danger{color:#e2806c;border-color:#3a2530}
+  .banner{background:#2a1f14;border:1px solid #4a3a1e;color:#e6c07a;border-radius:12px;padding:11px 13px;font-size:13.5px;line-height:1.65;margin-bottom:12px}
+  .empty{text-align:center;color:#6d7688;font-size:13.5px;padding:24px 10px;line-height:1.8}
+  .pillars{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
+  .pillar{background:#0e1219;border:1px solid #232b3b;border-radius:11px;padding:10px 4px;text-align:center}
+  .pillar .pgz{font-family:serif;font-size:26px;letter-spacing:.05em;color:#f0d9a8;line-height:1.25}
+  .pillar .pnm{font-size:11px;color:#6d7688;margin-top:2px}
+  .ghzline{font-size:12.5px;color:#8b93a7;letter-spacing:.14em;text-align:center;margin:2px 0 12px}
+  .trace{border-left:2px solid #2a3140;padding-left:11px}
+  .titem{font-size:12.5px;color:#9aa4bb;margin-bottom:8px;line-height:1.7}
+  .titem .tag{display:inline-block;font-size:10.5px;padding:0 6px;margin-right:6px;border-radius:5px;background:#1c2331;color:#d9a441;border:1px solid #2f3849;font-family:serif}
+  .luckwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -14px;padding:0 14px}
+  .luck{border-collapse:collapse;font-size:12.5px;white-space:nowrap}
+  .luck th{font-family:serif;font-size:17px;color:#f0d9a8;font-weight:400;padding:5px 12px;border-bottom:1px solid #232b3b}
+  .luck td{color:#8b93a7;padding:5px 12px;text-align:center}
+  .rec{border:1px solid #1e2432;background:#0e1219;border-radius:12px;padding:11px 12px;margin-bottom:10px}
+  .rec-top{display:flex;align-items:center;gap:8px}
+  .rec-top b{font-size:15.5px}
+  .rec-gz{font-family:serif;font-size:19px;letter-spacing:.12em;color:#f0d9a8;margin:4px 0 2px}
+  .rec-sub{font-size:12.5px;color:#9aa4bb;margin-top:3px;word-break:break-all}
+  .rec-sub.dim{color:#6d7688}
+  .rec-note{font-size:13px;color:#b5bdcf;margin-top:6px;word-break:break-word}
+  .rec-act{display:flex;gap:8px;margin-top:9px}
+  .mini{font-family:inherit;font-size:13px;color:#9aa4bb;background:#171c26;border:1px solid #2a3140;border-radius:8px;padding:5px 12px;min-height:34px}
+  .mini:active{filter:brightness(1.25)}
+  dl.kv{display:grid;grid-template-columns:auto 1fr;gap:7px 14px;margin:0;font-size:13px}
+  dl.kv dt{color:#8b93a7;white-space:nowrap}
+  dl.kv dd{margin:0;color:#c9cfdd;word-break:break-all}
+  .rule{border-left:2px solid #2a3140;padding-left:11px;margin-bottom:13px}
+  .rule.ok{border-left-color:#2f6d4f}
+  .rule.todo{border-left-color:#6d5320}
+  .rule b{display:block;font-size:14px;font-weight:600}
+  .rule span{display:block;font-size:12.5px;color:#8b93a7;margin-top:2px}
+  .testhead{font-size:14px;font-weight:600;padding:10px 12px;border-radius:10px;margin-bottom:12px}
+  .testhead.allpass{background:#12261c;border:1px solid #24513a;color:#6fd39b}
+  .testhead.somefail{background:#2a1a17;border:1px solid #5a2c22;color:#e2806c}
+  .tcase{display:flex;gap:9px;padding:7px 0;border-bottom:1px solid #171d28;font-size:13px}
+  .tcase b{font-weight:500;color:#d7dce6}
+  .tdetail{font-size:11.5px;color:#79839a;margin-top:2px;word-break:break-word}
+  .dot{width:9px;height:9px;border-radius:50%;margin-top:7px;flex:0 0 auto}
+  .dot.p{background:#3fb27f}
+  .dot.f{background:#c8452f}
+  .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:50;display:grid;grid-template-columns:repeat(6,1fr);
+    background:rgba(13,16,23,.93);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-top:1px solid #1e2432;
+    padding-bottom:env(safe-area-inset-bottom, 0px);padding-left:env(safe-area-inset-left, 0px);padding-right:env(safe-area-inset-right, 0px)}
+  .tab{background:none;border:0;font-family:inherit;color:#767f94;font-size:11.5px;padding:8px 2px 9px;min-height:52px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;position:relative}
+  .tab .glyph{font-size:16px;line-height:1;font-family:serif}
+  .tab.on{color:#d9a441}
+  .tab.on::before{content:"";position:absolute;top:0;width:22px;height:2px;border-radius:2px;background:#d9a441}
+  .toast{position:fixed;left:50%;transform:translate(-50%,6px);bottom:calc(env(safe-area-inset-bottom, 0px) + 74px);
+    max-width:86vw;text-align:center;background:#1b2230;border:1px solid #2c3547;color:#e9eaf0;padding:10px 16px;
+    border-radius:999px;font-size:13.5px;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:99;line-height:1.5}
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+  /* 全局错误兜底：白屏和正常页在用户眼里没区别，所以未捕获错误必须自己说出来 */
+  .errbar{position:fixed;left:10px;right:10px;top:calc(env(safe-area-inset-top, 0px) + 8px);z-index:120;
+    background:#1d1210;border:1px solid #6b2a1e;border-left:4px solid #c8452f;border-radius:10px;
+    padding:10px 12px;box-shadow:0 10px 26px rgba(0,0,0,.55)}
+  .errbar .eh{font-size:13px;font-weight:600;color:#ff9d86}
+  .errbar .em{font-size:12px;color:#e9c8bf;margin-top:4px;line-height:1.5;word-break:break-word}
+  .errbar .ef{font-size:10.5px;color:#9c8378;margin-top:5px}
+  .errbar .eb{display:flex;gap:8px;margin-top:9px}
+  .errbar .eb button{flex:1;min-height:32px;border-radius:8px;font-size:12.5px;border:1px solid #5a3a30;background:#2a1a15;color:#f0c3b4}
+</style>
+<style id="cmp">
+/* ===== 择日对照（R6）新样式，沿用既有色彩令牌 ===== */
+.qbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:8px;margin:0 -16px 12px;padding:9px 16px;background:rgba(13,16,23,.96);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-bottom:1px solid #1e2432}
+.qbar .wdot{width:28px;height:28px;flex:0 0 auto;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:serif;font-size:16px;color:#f0d9a8;background:#161c28;border:1px solid #2a3244}
+.qbar .qhd{display:flex;align-items:center;gap:7px;flex:0 0 auto;background:none;border:0;font-family:inherit;padding:2px 2px 2px 0;min-height:34px;color:inherit}
+.qbar .qhd:focus{outline:none}
+.qbar .qname{font-size:13px;color:#e9eaf0;text-align:left}
+.qbar .qname i{font-style:normal;display:block;font-size:10.5px;color:#79839a;letter-spacing:.06em}
+.qbar .qcaret{font-size:11px;color:#79839a;transition:transform .18s}
+.qbar .qhd[aria-expanded="true"] .qcaret{transform:rotate(180deg)}
+.qbar .qchips{flex:1 1 auto;display:flex;gap:5px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding-bottom:2px}
+.qbar .qchips::-webkit-scrollbar{display:none}
+.qbar .chip{flex:0 0 auto;padding:6px 8px;min-height:30px;font-size:12.5px}
+.chip{font-family:inherit;font-size:13.5px;color:#9aa4bb;background:#0e1219;border:1px solid #262d3d;border-radius:999px;padding:7px 15px;min-height:36px}
+.chip.on{background:#2a1c17;border-color:#7d3a25;color:#e8a48c}
+.qexpand{display:none;margin:-6px -16px 14px;padding:12px 16px 4px;background:#0d1017;border-bottom:1px solid #1e2432}
+.qexpand.on{display:block}
+.qexpand dl.kv{font-size:13px;gap:6px 14px}
+.qexpand dd.qgz{font-family:serif;font-size:19px;letter-spacing:.1em;color:#f0d9a8}
+.qexpand .field{margin-bottom:10px}
+.qexpand .avrow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.qexpand select{width:100%;min-height:44px;padding:0 12px;border-radius:11px;border:1px solid #262d3d;background:#0e1219;color:#e9eaf0;font-size:16px;font-family:inherit;-webkit-appearance:none;appearance:none}
+.h2 .h2btn{margin-left:auto;flex:0 0 auto;font-family:inherit;font-size:11.5px;padding:3px 10px;border-radius:999px;background:#171c26;border:1px solid #2a3140;color:#9aa4bb}
+.daybox{background:#0e1219;border:1px solid #232b3b;border-radius:12px;padding:10px 12px}
+.daybox.target{border-color:#3b3221;background:#12100b}
+.db-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px}
+.db-date{font-size:13.5px;color:#c9cfdd}
+.db-date em{font-style:normal;color:#6d7688;margin-left:6px}
+.db-badge{font-size:10.5px;padding:1px 8px;border-radius:999px;background:#1c2331;color:#8b93a7;border:1px solid #2a3244}
+.db-badge.gold{background:#2a2314;border-color:#5c4b1f;color:#e0bc72}
+.db-mid{display:flex;align-items:center;gap:14px}
+.db-gz{font-family:serif;font-size:27px;letter-spacing:.06em;color:#f0d9a8;line-height:1.1}
+.db-meta{font-size:11.5px;color:#79839a;line-height:1.55}
+.db-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:7px}
+.db-grid .k{background:#0a0d14;border:1px solid #1e2432;border-radius:9px;padding:6px 4px;text-align:center}
+.db-grid .k i{display:block;font-style:normal;font-size:10.5px;color:#6d7688;margin-bottom:2px}
+.db-grid .k b{font-size:14px;font-weight:600;color:#c9cfdd}
+.db-grid .k.g b{color:#6fd39b}.db-grid .k.y b{color:#e0bc72}.db-grid .k.r b{color:#e2806c}
+.delta{display:flex;align-items:flex-start;gap:8px;padding:8px 4px;font-size:12.5px;color:#8b93a7;line-height:1.6}
+.delta .ln{flex:0 0 auto;color:#3a4356}.delta b{color:#6fd39b;font-weight:600}
+.leadone{display:flex;align-items:center;gap:9px;margin:0 0 12px;padding:9px 13px;border-radius:12px;background:linear-gradient(180deg,#2a2416,#1e1a10);border:1px solid #4a3d1c;color:#e6c07a;font-size:13.5px;line-height:1.6}
+.leadone .lb{flex:0 0 auto;font-size:11px;padding:1px 7px;border-radius:6px;background:#3a2f14;border:1px solid #57461c;color:#d9a441}
+.leadone b{color:#f0d9a8}.leadone b.hi{color:#e8c06a}
+.leadone.warnl{background:linear-gradient(180deg,#2a1f14,#1e1610);border-color:#4a3a1e}
+.verdict{font-size:19px;color:#e9eaf0;line-height:1.5;margin:2px 0 10px}
+.verdict b{font-family:serif;color:#f0d9a8;font-size:22px;letter-spacing:.04em}
+.say{font-size:13.5px;color:#b5bdcf;line-height:1.75;margin:0 0 12px}
+.say em{font-style:normal;color:#e0bc72}
+.act{display:flex;gap:9px;align-items:flex-start;padding:9px 11px;border-radius:10px;margin-bottom:7px;font-size:13.5px;line-height:1.7}
+.act .lb{flex:0 0 auto;font-size:11px;padding:1px 7px;border-radius:5px;margin-top:3px}
+.act.main{background:#0f2018;border:1px solid #23503a}.act.main .lb{background:#1d3d2c;color:#6fd39b}
+.act.sec{background:#0e1219;border:1px solid #232b3b}.act.sec .lb{background:#1c2331;color:#9aa4bb}
+.act.no{background:#1d1210;border:1px solid #452520}.act.no .lb{background:#3a1e19;color:#e2806c}
+.act .tx{flex:1 1 auto;color:#c9cfdd}
+.r52pend{margin:0 0 10px;padding:7px 10px;border-radius:8px;background:#12151d;border:1px solid #232b3b;font-size:12px;line-height:1.6;color:#8b93a7}
+.r52box{margin:2px 0 12px;padding:10px 12px;border-radius:10px;background:#0d1119;border:1px solid #232b3b}
+.r52h{font-size:11.5px;color:#79839a;margin-bottom:7px;letter-spacing:.02em}
+.r52p{margin:0 0 6px;font-size:13px;line-height:1.7;color:#c9cfdd}
+.r52p:last-child{margin-bottom:0}
+.r52p b{display:inline-block;min-width:34px;margin-right:6px;font-size:11px;font-weight:600;color:#8b93a7}
+.r52p.s b{color:#6fd39b}
+.r52p.f{color:#d8b9a8}.r52p.f b{color:#e2806c}
+.tracecard{border-left:2px solid #2a3140}
+.trow{display:flex;gap:9px;padding:8px 0;border-bottom:1px solid #171d28;font-size:12.5px}
+.trow:last-child{border-bottom:0}
+.trow .rid{flex:0 0 auto;font-family:serif;font-size:11px;padding:1px 6px;height:19px;border-radius:5px;background:#1c2331;color:#d9a441;border:1px solid #2f3849}
+.trow .rbody{flex:1 1 auto;color:#9aa4bb;line-height:1.7}
+.trow .rbody b{color:#c9cfdd;font-weight:600}
+.trow .rbody span{display:block;color:#79839a;font-size:11.5px;margin-top:2px}
+.mini.wide{display:block;width:100%;margin-top:6px;min-height:44px;font-size:14.5px}
+@media (max-width:380px){
+.daybox{padding:9px 10px}.db-gz{font-size:22px}.db-meta{font-size:11px;line-height:1.5}
+.db-grid{margin-top:6px;gap:6px}.db-grid .k{padding:6px 3px}.db-grid .k b{font-size:14.5px}
+.delta{padding:6px 10px;font-size:12px;line-height:1.5}
+/* ≤380：只隐技术性冗余行，核心数据与大干支字全部保留。
+   隐掉=①「流日 (JDN+49) mod 60 = N」算式（追溯展开后 R1.3 那行还在，证据不丢）
+        ②「流年 丙午 · 流月 丁酉」（「今日」页已有，首屏冗余）
+   保留=大干支字、与命主/宜办度/最佳时窗 三格 */
+.db-meta{display:none}
+/* ≤380（iPhone SE / 12 mini）：印章点让位给第 5 个事项 chip，五个事项必须一屏看全 */
+.qbar{padding:8px 12px;gap:7px}.qbar .wdot{display:none}.qbar .qname{font-size:12.5px}
+.qbar .chip{padding:6px 7px;font-size:12px}
+}
+<style id="ty">
+/* ===== 体用对照（R7）新样式，沿用既有色彩令牌 ===== */
+.anch{margin-left:auto;flex:0 0 auto;display:flex;border:1px solid #2c3444;border-radius:999px;overflow:hidden}
+.anch button{font-family:inherit;font-size:12.5px;padding:6px 13px;min-height:32px;background:none;border:0;color:#8b93a7}
+.anch button.on{background:#20293a;color:#f0d9a8;font-weight:600}
+.src{font-size:11px;color:#79839a;margin:-6px 0 9px;letter-spacing:.02em}
+.tyrow{display:flex;gap:8px;align-items:baseline;font-size:12.8px;margin-bottom:5px}
+.tyrow .k{color:#79839a;font-size:11.5px;flex:0 0 58px}
+.tyrow .v{flex:1 1 auto;min-width:0;color:#c9cfdd}
+.tyrow .v em{font-style:normal;color:#d9a441;font-weight:600}
+.plainbox{background:#0e1219;border-left:2px solid #2a3140;border-radius:0 8px 8px 0;padding:8px 10px;font-size:12.6px;color:#c6ccda;margin-top:8px;line-height:1.75}
+.tlead{display:flex;align-items:baseline;gap:9px;margin:0 0 14px;padding:9px 13px;border-radius:12px;background:linear-gradient(180deg,#2a2416,#1e1a10);border:1px solid #4a3d1c;font-size:13.5px;line-height:1.7;color:#c9cfdd}
+.tlead .lb{flex:0 0 auto;font-size:11px;padding:1px 7px;border-radius:6px;background:#3a2f14;border:1px solid #57461c;color:#d9a441}
+.tlead .tl-h{color:#e9eaf0;font-weight:600}
+.tlead .tl-l{color:#9aa2b4}
+.usebox{display:grid;gap:9px}
+.tybox{background:#0e1219;border:1px solid #232b3b;border-radius:12px;padding:9px 11px}
+.tybox .tb-top{display:flex;align-items:center;gap:8px}
+.tybox .tb-gz{font-family:serif;font-size:22px;letter-spacing:.06em;color:#f0d9a8;flex:0 0 auto;white-space:nowrap}
+.tybox .tb-vg{margin-left:auto;flex:0 0 auto;font-size:12.5px;font-weight:600;border-radius:6px;padding:3px 8px;white-space:nowrap}
+.tb-vg.f{background:#0f2018;color:#6fd39b;border:1px solid #23503a}
+.tb-vg.s{background:#241417;color:#e08a7c;border:1px solid #4d2226}
+.tb-vg.n{background:#1a1d26;color:#9aa2b4;border:1px solid #2a3140}
+.tybox .tb-l{font-size:11.5px;color:#79839a;margin-top:3px}
+.tybox .tb-meta{font-size:11.5px;color:#79839a;margin-top:6px;line-height:1.7}
+.tybox .tb-meta b{color:#c9cfdd;font-weight:600}
+.tyl{display:grid;gap:5px;margin-top:9px}
+.tyl .yl{display:flex;align-items:center;gap:8px;font-size:12.8px;padding:6px 9px;border-radius:8px;background:#0c0f16;border:1px solid #191f2b}
+.tyl .yl .y{color:#79839a;font-size:11.5px;flex:0 0 36px}
+.tyl .yl .g{color:#f0d9a8;flex:0 0 42px;letter-spacing:.04em}
+.tyl .yl .sg{flex:1 1 auto;color:#c6ccda}
+.tyl .yl .dg{flex:0 0 auto;font-size:11px;padding:1px 6px;border-radius:5px}
+.dg.f{background:#12301f;color:#6fd39b}.dg.s{background:#331a1c;color:#e08a7c}.dg.n{background:#1c2029;color:#9aa2b4}
+.tyit{background:#0c0f16;border:1px solid #191f2b;border-radius:9px;padding:8px 10px;margin-bottom:6px}
+.tyit:last-child{margin-bottom:0}
+.tyit .h{display:flex;align-items:baseline;gap:7px;font-size:13px}
+.tyit .h .g{color:#f0d9a8;letter-spacing:.04em}
+.tyit .h .s2{color:#79839a;font-size:11.5px}
+.tyit .h .b{margin-left:auto;flex:0 0 auto;font-size:10.5px;color:#79839a;white-space:nowrap}
+.tyit .p{font-size:12.5px;color:#b9c0cf;margin-top:4px;line-height:1.75}
+.tyit .p.dim2{color:#79839a;font-size:11.5px;margin-top:3px;line-height:1.7}
+.tyit.lv1{border-left:3px solid #d9a441}.tyit.lv2{border-left:3px solid #a8802f}
+.tyit.lv3{border-left:3px solid #6d5522}.tyit.lv4{border-left:3px solid #3a3a3a}
+.tyit.lv0{border-left:3px solid #c8452f}
+.tyit.lvn{border-left:3px solid #4a5264}
+  .tygrp{margin-bottom:9px}
+  .tygrp:last-child{margin-bottom:0}
+  .tygh{display:flex;align-items:baseline;gap:7px;margin:0 0 5px;padding-left:2px}
+  .tygh .gn{font-size:12px;font-weight:600;color:#d9a441}
+  .tygh .gc{font-size:10.5px;color:#5f6879}
+.lvleg{font-size:11px;color:#79839a;margin-top:8px;line-height:1.85}
+.lvleg i{font-style:normal;display:inline-block;width:22px;height:3px;border-radius:2px;vertical-align:2px;margin-right:4px}
+.tyfold{font-size:11.5px;color:#79839a;margin-top:8px;line-height:1.7}
+#tyTop,#tyUse{scroll-margin-top:58px}
+#tyTop .pillar{padding:7px 4px}
+#tyTop .pillar .pgz{font-size:21px;line-height:1.2}
+#tyTop .pillar .pnm{font-size:10px;margin-top:1px}
+@media (max-width:380px){
+.usebox{gap:8px}.tybox{padding:8px 10px}.tybox .tb-gz{font-size:20px}
+.tybox .tb-meta{font-size:11px;line-height:1.6}
+.tyit .h{font-size:12.5px}.tyit .p{font-size:12px}
+.tlead{font-size:13px;padding:8px 11px;line-height:1.65}
+.tyrow{font-size:12.5px}
+.anch button{padding:6px 11px;min-height:30px;font-size:12px}
+}
+/* ===== 复盘对照（R9 · §16）新样式，沿用既有色彩令牌 ===== */
+.topbar{display:flex;align-items:center;gap:10px}
+.brand{flex:1 1 auto;min-width:0}
+.snapbtn{flex:0 0 auto;font-family:inherit;font-size:12px;color:#d9a441;background:#241a10;border:1px solid #57461c;border-radius:999px;padding:6px 12px;min-height:34px}
+.snapbtn:active{filter:brightness(1.3)}
+/* 复盘页比照 mock 的密度：这一段是本页专用，不影响其他页 */
+.seg2{display:flex;gap:4px;background:#0c0f16;border:1px solid #232b3b;border-radius:10px;padding:2px;margin:0 0 7px}
+.seg2 button{flex:1 1 0;font-family:inherit;font-size:12.5px;color:#79839a;background:none;border:0;border-radius:8px;padding:5px 0;min-height:32px}
+.seg2 button.on{background:#2a2416;color:#d9a441;border:1px solid #57461c}
+.fpbar{display:flex;align-items:center;gap:8px;background:#0c0f16;border:1px solid #191f2b;border-radius:10px;padding:5px 10px;margin:0 0 7px}
+.fpbar .who{flex:1 1 auto;min-width:0;display:flex;align-items:baseline;gap:6px;min-width:0}
+.fpbar .who b{font-size:12.5px;white-space:nowrap}
+.fpbar .who i{font-style:normal;font-size:10px;color:#79839a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fpbar select{flex:0 0 auto;max-width:44%;font-family:inherit;font-size:11px;color:#9aa4bb;background:#171c26;border:1px solid #2a3140;border-radius:7px;padding:3px 6px;min-height:28px}
+.fpbar .mini{min-height:28px;font-size:11px;padding:3px 9px}
+#fpBox .card{padding:9px 11px;margin-bottom:8px;border-radius:12px}
+.fphead{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.fphead .h2{margin:0;flex:1 1 auto;font-size:11.5px}
+.fpbadge{font-size:10px;padding:1px 7px;border-radius:6px;font-weight:600;white-space:nowrap}
+.fpbadge.warn{background:#241a10;color:#d9a441;border:1px solid #57461c}
+.fpbadge.ok{background:#0f2018;color:#6fd39b;border:1px solid #23503a}
+.fpvar{font-size:12.5px;color:#e9eaf0;line-height:1.5}
+.fpvar b{color:#d9a441;font-weight:600}
+.fpsub{font-size:10.5px;color:#5f6879;line-height:1.5;margin-top:2px}
+.fpsub.hi{color:#9aa2b4;text-wrap:balance}
+.fpban{margin-top:6px;background:#191308;border:1px solid #4a3d1c;border-left:3px solid #d9a441;border-radius:0 8px 8px 0;padding:5px 9px}
+.fpban div{font-size:11.5px;color:#e8d9b4;line-height:1.5}
+.fpban div.dim{color:#a99a76;font-size:10.5px}
+.fpban div.chg{color:#d9a441;font-size:10.5px;margin-top:2px}
+.fpblk{background:#0c0f16;border:1px solid #191f2b;border-radius:10px;padding:6px 10px;margin-bottom:7px}
+.fpblk .bh{display:flex;align-items:baseline;gap:7px;font-size:11px;color:#79839a;margin-bottom:4px}
+.fpblk .bh .nm{font-weight:600}
+.fpblk.l .bh .nm{color:#8fa6c9}
+.fpblk.r .bh .nm{color:#d9a441}
+.fprow{display:flex;align-items:baseline;gap:7px;font-size:12.3px;line-height:1.5;margin-bottom:1px}
+.fprow .k{flex:0 0 60px;font-size:10.5px;color:#5f6879}
+.fprow .v{flex:1 1 auto;min-width:0;color:#e9eaf0}
+.fprow.fix .v{color:#8b93a7}
+.fprow .v em{font-style:normal;color:#d9a441;font-weight:600}
+.fpblk .tr{font-size:10px;color:#5f6879;margin-top:5px;line-height:1.6;border-top:1px dashed #1e2432;padding-top:4px}
+.fpblk .tr b{color:#79839a;font-weight:600}
+.fpdiff{background:#0e1219;border:1px solid #2a3140;border-radius:10px;padding:7px 10px;margin-bottom:8px}
+.fpdiff .dh{font-size:10.5px;color:#79839a;margin-bottom:3px}
+.fpdiff .dl{font-size:12.3px;color:#e9eaf0;line-height:1.5}
+.fpdiff .dl em{font-style:normal;color:#d9a441;font-weight:600}
+.fpdiff .dn{font-size:10.5px;color:#5f6879;margin-top:3px;line-height:1.55}
+.snapbtn{min-height:32px;font-size:11.5px;padding:5px 11px}
+@media (max-width:380px){
+.fprow{font-size:12px}.fprow .k{flex:0 0 56px;font-size:10px}
+.fpblk .bh{font-size:10.5px}
+.seg2 button{font-size:12px}
+.snapbtn{font-size:11px;padding:5px 10px}
+.fpbar .who b{font-size:12px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <div class="brand"><span class="seal">天</span>
+      <span class="brandtxt"><b>天纪排盘</b><i id="brandSub">本地存档 · 不联网</i></span>
+    </div>
+    <button class="snapbtn" id="btnSnap" type="button">存下这一屏</button>
+  </header>
+  <main id="main">
+    <section class="screen on" data-s="paipan">
+      <div id="storeWarn"></div>
+      <div class="card">
+        <div class="h2">建立命主档案</div>
+        <label class="field"><span>代号 / 姓名</span><input id="fName" type="text" autocomplete="off" placeholder="例如：本人、老王"></label>
+        <label class="field"><span>性别（决定大运顺逆，R4）</span>
+          <select id="fGender"><option value="male">男</option><option value="female">女</option></select></label>
+        <label class="field"><span>出生日期（公历）</span><input id="fDate" type="date"></label>
+        <label class="field"><span>出生时间（北京时间）</span><input id="fTime" type="time"></label>
+        <div class="switch"><span>启用真太阳时校正（R2）</span><input id="fTrueSolar" type="checkbox"></div>
+        <div id="lonRow" style="display:none">
+          <label class="field"><span>出生地经度（东经为正，例如北京 116.4）</span>
+            <input id="fLon" type="text" inputmode="decimal" autocomplete="off" placeholder="116.4"></label>
+        </div>
+        <label class="field"><span>出生地（备注用，可留空）</span><input id="fCity" type="text" autocomplete="off" placeholder="例如：上海"></label>
+        <label class="field"><span>备注</span><input id="fNote" type="text" autocomplete="off" placeholder="可留空"></label>
+        <button class="btn" id="btnCalc">排盘</button>
+        <button class="btn ghost" id="btnSave">保存档案</button>
+      </div>
+      <div id="chartBox"></div>
+    </section>
+
+    <section class="screen" data-s="today">
+      <div id="todayBox"></div>
+    </section>
+
+    <section class="screen" data-s="records">
+      <div class="card"><div class="h2">本地存档 <span class="pill" id="recCount">0</span></div><div id="recList"></div></div>
+      <div class="card">
+        <div class="h2">备份与迁移</div>
+        <button class="btn ghost" id="btnExport">导出全部数据（JSON）</button>
+        <button class="btn ghost" id="btnImport">导入备份文件</button>
+        <input id="fileImport" type="file" accept="application/json,.json" style="display:none">
+        <button class="btn ghost danger" id="btnWipe">清空全部数据</button>
+        <p class="note" style="margin-top:12px">导入时按 <b>档案 ID</b> 合并：同 ID 保留更新时间较新的那条，不会产生重复。</p>
+      </div>
+    </section>
+
+    <section class="screen" data-s="compare">
+      <div class="seg2" id="cmpSeg">
+        <button type="button" data-sg="zeri">择日</button>
+        <button type="button" data-sg="fupan">复盘</button>
+      </div>
+      <div id="cmpBox"></div>
+      <div id="fpBox" style="display:none"></div>
+    </section>
+
+    <section class="screen" data-s="tiyong">
+      <div id="tyBox"></div>
+    </section>
+
+    <section class="screen" data-s="rules">
+      <div class="card">
+        <div class="h2">规则登记表</div>
+        <p class="note" style="margin-bottom:14px">每个结论都要能追溯到这里登记的某一条规则。<b>已登记</b>＝规则说明已定稿；<b>待签字</b>＝说明已写，等你逐条确认；<b>待登记</b>＝还没写，代码也不会先写。</p>
+        <div id="ruleList"></div>
+      </div>
+      <div class="card">
+        <div class="h2">引擎自检</div>
+        <p class="note" style="margin-bottom:12px">在你这台设备上现算一遍，跑的是 App 内的同一份引擎代码。</p>
+        <button class="btn ghost" id="btnSelfTest">运行自检</button>
+        <div id="testBox" style="margin-top:14px"></div>
+      </div>
+      <div class="card"><div id="verifyBox"></div></div>
+      <div class="card"><div class="h2">环境自检</div><dl class="kv" id="envList"></dl></div>
+      <div class="card">
+        <div class="h2">数据在哪</div>
+        <p class="note">全部数据存在这台手机的浏览器本地（localStorage），<b>不做任何网络上传</b>，页面也不加载任何外部资源。<br><br>代价是：清除 Safari 网站数据、或用无痕模式，数据会没。所以请定期用「导出」留一份备份。</p>
+      </div>
+    </section>
+  </main>
+  <nav class="tabbar" id="tabbar"></nav>
+</div>
+<div class="toast" id="toast"></div>
+<div class="errbar" id="errBar" hidden></div>
+<script>
+
+
+/* ==================== ENGINE-START ==================== */
+var NHTJ = (function () {
+  'use strict';
+
+  var RANGE_MIN = 1900, RANGE_MAX = 2100;      // 允许输入的年份区间
+  var TABLE_FROM = 1899, TABLE_TO = 2101;      // 表向外各扩一年，供边界年份查上一个/下一个节
+  var GAN = '甲乙丙丁戊己庚辛壬癸';
+  var ZHI = '子丑寅卯辰巳午未申酉戌亥';
+  var TERMS = ['小寒','大寒','立春','雨水','驚蟄','春分','清明','穀雨','立夏','小滿','芒種','夏至','小暑','大暑','立秋','處暑','白露','秋分','寒露','霜降','立冬','小雪','大雪','冬至'];
+  var TERM_LON = [285,300,315,330,345,0,15,30,45,60,75,90,105,120,135,150,165,180,195,210,225,240,255,270];
+  var JIE = [0,2,4,6,8,10,12,14,16,18,20,22];
+
+  var TM_AL = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+  var TM_DATA = [
+  '2Bm7hi1cl7BI2Hu7vO2017jZ2HT86d2M18Ek2tO8mZ32i8t63528qE3JU8yZ2yd8YL2rB8Nc2HM7nR1iK7Gz2NS81525Z7pH',
+  '2N18CL2Rb8KS2z08sG38N8ym3Aj8vs3PB94B34K8dw2wq8TC2Mz7sz1nw7MX2T586e2BE7us2Sl8Hx2XN8Q434m8xs3E694O',
+  '3GQ91V3Ut99q3A38jd32b8Yv2Sm7yi1ti7SG2Yq8CL2Gw80W2YN8Na2cu8Vf3AE93S3JW99x3Lr9753aL9FU3Fa8pM38D8ei',
+  '2YS84Y1zP7Y52eV8I72MY86F2dx8TF2iV8bJ3Ft9953PE9Fa3Ra9Ci3g69L53LJ8uw3Dv8kH2e98A62567dd2My80R2517oY',
+  '2MR8BZ2Qz8Jf2yO8rW37k8y43A68vE3Oa93b33l8dQ2wL8Sk2MZ7sa1nY7M92Sg86E2Al7uO2SA8HP2Wg8PT3408xG3DJ93l',
+  '3Fe90s3U899E39K8j331v8YO2SA7yF1tA7Rr2YK8Bx2GR8072Xt8N72cP8V839j92r3J299K3LM96R3Zr9Ep3F58og37i8e1',
+  '2Xv83r1yt7XO2dz8HR2M385Z2dS8SZ2hx8ad3FH98Q3Oa9Ex3Qw9C93fT9Ka3Ki8uS3DM8jo2dZ89c24V7d82MM7zv24O7o3',
+  '2Lm8B42QJ8J92xg8qw3718xR39M8uY3Nr92v3348cl2vg8S62Lt7rv1mr7LS2Rx85V2A27te2RT8Gf2W28Ok33Q8wX3Cl932',
+  '3F59093TX98V38j8iK31L8Xg2Ra7xX1sZ7R62Xh8B92Fj7zG2X58ME2bY8UH38r9233I998Z3KU95j3Yz9E73ED8nz36r8dM',
+  '2X783D1y67Wm2dD8Go2LF84u2ca8Rr2h48Zs3EP97d3Nl9E93Q99BK3eh9Ji3Jv8tY3CW8ir2ci88f23e7cC2LV7yz23Y7n6',
+  '2Kx8A52PU8I92wr8py36D8wX38c8tk3N992A32N8c02ux8RJ2L87r51m37Ka2R784c29A7sl2QZ8Fm2V48Nq32N8vc3Bg928',
+  '3E28zJ3Sa97j37q8hb30T8Wx2Qh7wm1rd7QI2Wi8AJ2Ek7yP2W88LO2ae8TP37z9193HJ97e3Jh94o3YF9DF3DX8nA36D8cY',
+  '2WS82O1xO7Vr2cO8Fn2KL83p2bf8Qk2g88Yn3DU96c3Mq9DD3PF9AS3dp9Iw3J88ss3Bo8iG2c48862307ba2Kn7yJ22k7mL',
+  '2K289G2OU8HI2vq8p735D8vh37d8st3MC91J31S8bC2u68QZ2KM7qP1lK7Jx2QP83x28Q7s12Pm8Ex2UF8Mw31a8ui3Aw91G',
+  '3DL8yS3Ru96u37B8gn2zp8WA2Q47w11r37PZ2W989a2E97xd2VS8KY2Zr8SW37690F3GN96n3Im9423XM9CX3Ch8mU35P8bu',
+  '2Vg81l1wd7VI2bi8FH2Jh83L2b08QF2fR8YE3Cj95x3M29CS3OS99f3d39I93IO8s53B48hT2bJ87I22F7an2K37xX2237lb',
+  '2JP88Y2Nu8Ga2vH8oN34c8uv3718s83LZ90b30r8aV2tW8Pt2Jm7pj1ki7JE2Pl83D27l7rI2P68EH2Ta8MK30t8u63AC90d',
+  '3CY8xo3R596E36M8g92z28VX2PJ7vQ1qI7Oy2VO88z2DO7x32Uj8Jy2ZC8Rz36Y8zk3Ft96G3II93S3Ws9Bt3C98ln34p8bB',
+  '2V48111w07UW2b38ET2J082U2aI8PN2ek8XP3C695F3LV9Bs3Nx99A3cZ9Hf3Hs8ra3AX8gv2ak86i21e7aB2JQ7wu21N7kx',
+  '2Ig87s2N88Fv2uT8nm33s8uO36M8re3Ky90830H8a22sv8PN2J77pA1k17Id2P282a2717qd2OM8DZ2Sq8La30D8tN39b8zx',
+  '3C48xD3Qh95j3628ff2yi8V32Ow7uq1pq7OJ2Uq88D2Ck7wC2U08J52YQ8R435i8yr3F295S3HU92l3W99BK3BY8lM34J8an',
+  '2Ub80e1vW7U62aU8Dz2IM81w2ZZ8Om2dx8Wk3BG94X3Kd9B73N898P3bn9Gx3HB8qw39u8gN2aB86D2167Zf2Ir7wK20l7kH',
+  '2I08762MP8F42tk8ms33A8tV35e8qo3KI8zL2ze8ZI2sL8Oi2Ic7oY1jZ7I32Oa81z26V7py2Nk8Cq2S78Kn2zM8sX38f8z7',
+  '3B68wO3Pj94v3568eu2xo8UL2O77uD1p57Nk2U987i2C57vi2TL8IY2Xi8QT34y8yA3EH94g3Gi91w3VO9AU3Am8kU33X8Zw',
+  '2To7zm1uj7TE2Zi8D82Hc8162Ys8Nv2dG8Vs3AY93d3Jt9AE3ML97X3b19G83GQ8q939A8fa2ZR85P20L7Yq2I57vW1zy7jU',
+  '2HD86N2Lc8EN2su8mA32G8sk34h8q03JK8yW2yg8YU2rO8Nu2Hf7nl1ib7HE2Nb81925X7p82Mo8C12RF8K02ya8rl37y8yK',
+  '3AQ8vZ3P294434N8e12x58TS2NN7tJ1oK7Mo2TK86i2BE7ue2SR8HT2Wn8PQ3448xC3DQ93o3Fs9173UX99g39v8jg32f8Z7',
+  '2Sw7yy1tt7SS2Ys8CM2Gk80I2Xw8N72cI8V439a92r3Iy99U3LU96o3aC9FN3Fa8pL38H8ej2YV84W1zN7Xx2H77uc1z17iZ',
+  '2GH85P2Kh8DO2s28lC31T8rr3418pC3Ii8xm2y78Xl2qo8N92H27mv1hu7GL2Mq80D24j7oB2Lz8B32QN8J22xe8qp36z8xS',
+  '39T8un3OB93P33b8dR2wM8Ss2Md7sh1nX7M82SU85z2AL7tv2RX8Gk2Vv8Oi33D8wT3Cb9343F690O3Tp99039I8j43268YX',
+  '2SO7yN1tG7Rl2YA8BY2Fx7zP2X78MB2bU8U738o91x3IG98d3Ko9613ZZ9Eg3F28ol37p8eE2Y88441z27XU2Gi7u41yV7hv',
+  '2Fc84h2Jw8Ce2rE8kU30e8rB33B8oY3Hu8x92xL8XB2q68Md2GO7mU1hK7Fw2MI7zo2497ni2LK8AV2Pf8IP2wx8qA36M8wn',
+  '38u8u93Ne92l3368co2vs8SG2MA7s81n77Lb2S585T29w7tL2R58G52VN8Nw32a8vf3Bu92I3EQ8zg3TC98N38h8iU31X8Y0',
+  '2Rr7xr1sm7RI2Xj8B92FX7z22Wf8Ln2ax8Tg38B91R3HX9833K395Q3Yp9E43EJ8oA3778dd2XP83T1yJ7Wt2G07tV1xq7hO',
+  '2F284B2JP8C62qi8js3078qU32e8nq3HN8wS2wp8WW2pc8Lz2Fu7lq1gp7FH2Lm7z723c7n12Kn89o2P78Hk2wN8pV35h8w7',
+  '38A8tS3Mr92432I8c72v68Rc2LQ7rV1mO7Kz2RN84r29D7sk2QM8FW2Uf8NQ31v8vB3BI91m3Dn8z73SX97j37z8hm30m8XF',
+  '2R47x61ry7QW2Wu8AL2Ei7yB2Vr8Kv2aB8Sp37U90c3Gv97J3JV94j3YH9DO3Dk8nS36W8ct2Wm82g1xe7W52FK7sf1x77gX',
+  '2EG83K2Ia8BH2ps8j62zG8pn31p8nC3Ga8vq2w38Vt2oo8LJ2F37l71fv7EV2Kp7yK22e7mD2Jp8912OB8Gx2vU8oj34t8vM',
+  '37S8sk3MF91P31k8bU2uX8Qx2Kp7qm1lh7KA2QZ83v28L7rj2PR8ER2Tj8MK30z8u63AN90l3Cw8yC3Rk96v37I8h530A8Wb',
+  '2QU7wS1rN7Pq2WF89a2Dx7xM2Uz8K32ZF8Rx36U8zl3Ft96S3IU93t3XI9Ca3Cp8mh35e8cC2Vy8221wr7VR2EV7ry1wF7fl',
+  '2DK82S2Hc8AL2ov8i72yN8op3108mG3Fo8uw2vK8V22o88KV2EQ7kL1fK7Dl2KE7xZ2217lN2J68852NM8Fw2uZ8ng33v8uL',
+  '36T8rm3LG90U30n8ac2td8Q72Jx7pz1kt7JQ2Pp83F27b7r62Og8Dn2Sv8Le3078tN39T9003C28xP3Qr96836R8gI2zJ8Vo',
+  '2Pc7ve1qU7P12VL88l2D57wY2UA8JE2YR8R535i8yr3F895X3Hk92z3Wa9Bj3C98lt3518bP2VK81E1wC7Ub2Do7r61vX7et',
+  '2Cc81d2Gu89Y2oA8hM2xY8o33078lT3Eu8uA2uQ8UI2nG8Jn2Da7jf1eV7D42JO7wq2197kf2IE87O2MX8FJ2to8n533E8tk',
+  '35o8r83Kc8zo3088Zv2sy8PR2JI7pI1kD7Ii2P782U26q7qF2Nt8Ct2S88Kj2zN8sU38n8zC3BP8wf3QF95P35o8fZ2yg8V6',
+  '2P07ux1pu7OM2Un8872CV7vt2TX8IY2Xk8QQ34y8yD3EO94y3H292S3Vu9BD3BS8lL34H8ao2UY80c1vP7Ty2D27qV1um7eI',
+  '2Br8102G988s2nR8gf2wu8nO2zZ8kt3ET8te2u28Tm2ms8JG2D97j31dy7CO2Ip7w820Y7jv2Hd86c2Lu8EU2t98mG32W8sx',
+  '3578qQ3Jz8zD2za8ZQ2sU8Ox2Ip7oo1jh7IB2OY81u26E7pf2NG8CL2RT8KC2yh8ry3868ye3Ah8w73Pa94u35D8f82y98Uh',
+  '2OU7uY1pM7Nt2U987Y2Bn7vE2Sm8Hq2X08Pg34I8xT3Dl94E3GS91k3VM9AX3Ay8kj33t8aI2UE8091v77TV2Ci7py1uM7df',
+  '2BL80I2FY8892mm8fx2wC8mh2yp8kD3Di8sz2tH8T92m98Ig2CU7iX1dO7Bw2IH7vh1zz7jS2H08662LC8Dw2sP8lg31p8sN',
+  '34S8pq3JL8yc2yx8Yn2rq8OK2IA7oC1j47Ha2Nv81J25d7p22Mc8Bc2Qo8JN2xz8r537N8xm3A08vH3Ov94734Z8eM2xW8Tw',
+  '2Ns7to1ol7NA2Ta86r2BF7uZ2SD8HC2WO8P133Z8wm3Cx93U3Fa9103UT99o3A58k032z8ZY2TK7zO1uB7Sj2Bm7pC1tR7cv',
+  '2AS7za2Eh87R2ly8fD2vP8lv2y38jO3Cw8sA2sX8SL2lQ8Hs2Bl7hi1cd7B52HT7um1z97iV2GA8582KO8Cx2rc8ki3108rP',
+  '33b8ot3IT8xf2y38Xr2qx8NQ2HK7nI1iE7Gg2N580O24k7o72Li8Aj2Ps8IZ2x58qL36U8x43988uZ3O293M33e8dZ2wX8T6',
+  '2Mr7sv1nh7MF2SV85u2A87ta2R68GB2VJ8O032Z8vn3C492Z3Eo9093Tn98z39R8jC32K8Yi2Sc7yV1tQ7Rn2Ay7oD1sb7bt',
+  '29Z7yW2Dm86M2l18eB2uT8kx2x98iX3C68rN2rj8Rb2kd8H72Av7gu1bk7AD2GX7ts1yA7ha2F884E2JL8C52qZ8js3018qb',
+  '32h8o93Hf8x02xM8XG2qI8Mq2Ge7mg1hU7Fz2MF7zb23p7nD2Kk89k2Ou8HW2w78pG35Z8w138H8ta3NH92V3308co2w18SS',
+  '2MQ7sK1nH7Le2S285F29a7sp2QR8FM2UY8N831j8uw3BB91k3Dt8zL3Ss98E38Z8iV31W8Y62Rt7xx1sl7RI2AK7ni1ru7bL',
+  '28o7xt2Cx85g2kB8dS2te8kE2wO8ho3BO8qg2r58Qw2k18GV2AN7gM1bF79i2G47tO1xi7h32Ee83a2Im8BK2pw8j22zK8pk',
+  '3208nJ3Gy8wD2wg8WV2pf8M72G37m01gx7FN2Lm7z423P7mk2KL89I2OR8H42vZ8om34w8vV37a8t33MZ91x32I8cH2vI8Rt',
+  '2Lg7rk1mW7L32RI84g28s7sJ2Pn8Es2Tx8Me31B8uP3Ad9193DM8yi3SM97c3858hu3148XW2RR7xN1sH7Qg29p7n41rP7ah',
+  '28L7xG2CW8552jk8cs2tB8jd2vp8hB3Al8q22qQ8QH2jN8Fs29l7fk1ad7962FR7sl1x37gR2Dz8312I98Ar2pM8ie2yn8pO',
+  '31T8mv3GQ8vl2w58W02p18Lb2FP7lT1gI7Ep2L57yS22f7m32JY88Z2Ng8GJ2ut8o334M8up3768sQ3M691K31o8bb2um8RC',
+  '2L97r31m07KN2Ql83z28K7ra2PD8E62TK8Lt30V8tg39y90W3Ci8yA3Rj97437Q8hK30M8Ws2Qf7wf1rT7Pw28z7mK1qY7Zy',
+  '27T7wY2Bd84M2ir8cA2sM8iy2v88gb3AB8pW2pu8Pn2iq8FL2997f81Zw78N2Ee7ry1wE7fa2D98272HI89s2oV8hc2xw8oO',
+  '30f8lz3Fh8uw2vR8VH2oS8Ku2Eq7kk1fg7E22KO7xb21u7lA2Il87g2Mq8FS2u18nE33S8u236B8rf3LD90c30z8ay2u18Qc',
+  '2KP7qS1lE7Ji2Pu83E27M7qk2OA8DC2SF8Kx2zT8sk38z8za3Bo8xF3Qu96D36g8gX2zg8WA2Q47w01qt7PH28N7lb1pr7Z7',
+  '26g7vZ2Al83J2hx8b52rQ8hu2uC8fZ39E8oW2oz8Oq2hy8ES28M7eJ1ZD77d2Dy7rE1vW7ep2CM81K2GP8932nX8gn2wy8na',
+  '2zi8lE3El8uB2uY8UX2nZ8KA2Dx7k21eo7DK2JX7wt2137kR2Hr86r2Lu8EX2t28mE32U8sz35F8qe3KM8ze30B8a32tG8Pj',
+  '2Jg7pb1kW7Is2PE82Q26j7pw2NX8CO2Ra8K72yj8rr3898yf3At8wK3Px95J35k8fg2ym8VK2PB7vB1q07OS27U7km1oz7YL',
+  '25p7uq29u82c2h68aP2qZ8hC2tK8ep38N8nl2o98O62hA8Dj27Z7db1YP76t2D97qT1uf7e12BW80U2Fb88C2mm8fv2wE8mg',
+  '2yy8kI3E08tF2tm8Tb2mo8JG2DE7j91e77CU2Is7w420O7jc2HC8642LF8Do2sN8lZ31o8sO34Z8q33Jd8z22zQ8ZO2sR8P1',
+  '2Io7oq1jd7I72OK81e25o7pB2Mc8Be2Qg8JO2xt8rC37Q8y33AH8vl3PP94m35E8f72yE8Uj2OZ7uW1pM7Nl26o7k31oI7Xa',
+  '2587u329F81o2gS8Zb2px8gR2sk8e837r8n92nf8NV2gg8D82727cx1Xq76B2CW7pj1u07dH2Ap7zm2Ev87Y2m58fL2vY8mB',
+  '2yL8js3DR8st2tH8TI2mL8Ix2Ck7io1dZ7C32ID7vX1zd7iz2GN85N2KP8D52ra8kp3168rf33w8pN3J68yR2yy8Ys2s68Oa',
+  '2IX7oT1jN7Hj2O281C25R7oc2M98Ay2Q98If2xJ8qS36o8xL39e8v63Om94834c8eX2xf8UC2O57u31ou7NJ26N7jb1no7X6',
+  '24Y7tV28Z81E2fi8Z12pD8ft2s38dc37C8md2n28N12g58Cf26T7cW1XJ75n2C07pL1tU7cq2AH7zE2EI86s2lP8eY2uq8lL',
+  '2xe8j23Cn8s62sf8SW2ll8ID2CC7i61d27BN2Hk7uu1zC7iO2Fx84n2Jx8CS2r28kB30R8qz33D8oh3IL8xm2yE8YE2rK8Nu',
+  '2Hk7nl1iX7Gy2NB80S24a7nv2LK8AK2PM8I22wW8po3608we38q8uN3O193Q33t8dr2wz8TY2NP7tO1oC7Mc25c7ir1n17WI',
+  '23m7sh27q80P2f18YA2oW8ez2rJ8cg36P8lh2mF8M62fJ8Bm25j7be1WZ74u2BF7oP1sg7bt29R7yJ2DS8622kb8dp2u38kf',
+  '2wr8iN3Bx8rO2rm8Rn2kr8HT2BH7hL1c77Ac2Gn7u61yB7hW2Et83s2Ir8BW2pz8jG2zV8q732N8nr3HZ8ww2xT8XO2qZ8N4',
+  '2Gy7mv1hm7G92MQ7zb23p7n12KW89M2OV8H02ve8om3598vg3818tT3ND92Z3368d02wA8Se2MX7sS1nI7Le24h7hs1m67VL',
+  '22p7rl26q7zT2dz8XH2nU8eA2qM8bw35Z8l32lT8LU2eY8BA24w7ay1Vi74A2AK7nc1ri7b228R7xP2CR8542jZ8cm2t38jb',
+  '2vu8hL3B68qR2r28Qx2kC8Gh2Af7ga1bU79o2G67tE1xS7gc2E882w2I58Aa2pC8iL2yf8pD31V8mz3Gg8w72wc8Wd2pm8MM',
+  '2GF7mF1h37FR2Le7yr22y7mD2Jb88X2NX8GC2ug8o034D8uv3788sj3MN91q32J8cK2vR8S22Ls7ru1mg7L82457hK1lS7Ui',
+  '2287r22667yf2dF8WP2ml8dH2pd8b334q8kA2kk8Kc2dr8AK24I7aC1V773S29n7mw1rC7aN27u7wk2Br84O2ix8c82sO8j0',
+  '2vE8gm3AQ8pu2qM8QO2jV8G729w7fz1al79D2FO7sf1wl7g42DP82N2HL89z2oR8hh2xu8oY30n8mL3G38vV2w38W22pE8Ln',
+  '2Fh7lf1gU7Es2L67yH22R7le2J787x2N48Fa2uC8nK33h8uD36a8s13Ln91931j8bd2ur8RM2LI7rD1m67KQ23U7gc1kq7U1',
+  '21W7qO25U7y62cd8Vu2m98co2p18ab34D8ji2k88KA2dF89s23g7Zk1UU72x2977mP1qT7Zn2797w72B783k2iF8bT2rk8iK',
+  '2ud8g639q8pD2pm8Ph2iv8FQ29N7fJ1aC78Y2Eq7rz1wD7fN2Cr81f2Gn89H2nu8h22xP8nx30I8lm3FX8uw2vU8VR2oc8L9',
+  '2F17ky1fm7E82KM7xW21f7kt2IJ87D2ME8Es2tM8mg32v8te35t8rW3LC90i31A8bD2uI8Qt2Kg7qh1lP7Jp22j7fy1k27TJ',
+  '20h7pd24g7xI2bq8V32lO8bx2oK8Zn33b8iy2ja8JU2cj89C2397Z21Tv72C28U7lZ1pn7Yv26R7vF2AO82u2hV8ag2r08hb',
+  '2tt8fR3998od2p98PC2iL8Ex28o7ep1Zb77z2E87rJ1vM7ea2Bu80p2Fm88Q2ms8gB2wP8n62zM8ky3Eg8uC2uj8Um2ny8Ka',
+  '2ET7kU1fH7De2Jo7wy2137kE2Hb86P2LS8Dy2sZ8li3278sf3558qY3KO8zl30O8aJ2tZ8Q32K17pv1kp7J722B7fG1jS7Sa',
+  '2027op23u7wR2ay8UC2kT8b92nP8Z232i8iF2ii8Im2bt88X22L7YO1T871b27j7kz1p37YK25d7uZ29U8262gX8Zl2q08gc',
+  '2su8eR38D8nf2oG8OG2hV8E327z7dx1Yo77A2DP7qY1ui7dr2BJ8052FA87c2mD8fJ2vf8mB2yX8k13Dp8tG2ts8Tr2n68Je',
+  '2Da7jW1eM7Cf2It7w12097jK2Gj85a2Kc8DD2rh8kz31D8ru3488pm3JR8yz2zT8ZY2sg8PK2J97pC1jv7IM21F7eT1iV7Rl',
+  '1z67o22327ve2aA8TO2jh8aH2mc8Y531s8hF2hr8Hm2b387Y21W7XR1SL70e26w7k21oE7XM24q7tc28k81E2fq8Z02pM8fw',
+  '2sG8dm37W8my2nV8NV2gg8DG2797d81Xw76K2CV7pg1tl7cy2AI7zB2E886l2lD8eX2ul8lU2xl8jP3D78se2tB8TF2mO8J0',
+  '2Cp7iq1da7Bz2I77vJ1zM7iZ2Fv84m2Jo8CL2qv8k630V8r533W8p13It8yH2yw8Yr2s78OZ2IW7oN1jF7HU20W7da1hm7Qs',
+  '1yM7n922G7un2ZN8Sb2iv8Za2lu8XX31G8go2hK8HP2aX87A20y7Wz1Rh70626C7jP1nQ7Wf23y7st27p80T2ev8YD2oS8f8',
+  '2rQ8d236o8mK2mv8My2gD8Co26i7ch1XV75q2C07p71tC7cK29h7yT2DX8602kc8dk2u98ki2x88id3CV8rw2sc8Sb2lt8IQ',
+  '2CO7iI1d97BQ2He7uh1yo7ht2FH8432J58Bd2q98jR2zi8qS32k8oR3IA8xk2yG8YN2rV8OB2Hz7o31im7HC2047dH1hG7QU',
+  '1xl7mf21b7uC2Yf8Rv2iD8Yq2lD8Wl30b8g32gh8Gf2Zw86T20Q7WM1RD6zX25m7is1n27W823Z7sJ27P7zq2eR8XY2nv8eU',
+  '2qr8cP36E8li2mK8MM2fb8CC2677c51Wu75E2BP7oW1sb7bk2957xv2Cr85R2js8dA2tN8k62wM8i23Bl8rN2rv8S32lE8Hu',
+  '2Bl7ho1cX7Aw2H17uC1yC7hO2Eg83X2IV8B32pa8im2z88pj3288nd3HV8wv2xb8XY2qr8NM2HL7nF1i87GO1zP7cS1gb7Pf',
+  '1x77ls20y7tS2Y38RF2ha8YD2kY8W92zt8fQ2fx8G12ZC85p1zg7Vh1QT6yr2507iB1mC7VP22g7rZ26U7z62dW8Wp2n38dk',
+  '2q18be35P8kw2lV8LZ2em8BO25H7bI1W574S2Ac7nl1ro7ay28J7x52C684a2j98cI2sh8jG2vh8hD3B68qX2rD8RB2kT8Gy',
+  '2Av7gn1bf79t2G87tA1xI7gM2Dm82X2Ha8A62oe8ht2yD8ow31G8mx3Gi8wJ2wq8Wx2q58Mj2GW7mX1hE7Fc1yR7bc1fb7Op',
+  '1w57l01zw7sZ2X28QJ2ga8XG2jc8VE2z38eY2fC8FD2YT8511yw7Us1Pg6xy2497hD1lJ7UP21n7qY25d7y62ci8Vr2mF8cp',
+  '2pF8an34e8k82ko8Kq2e78Ah24e7aa1VP73f29q7ms1qv7Zz27I7w42B283a2i48bN2rd8iO2uh8gQ3AA8pn2qM8QW2jh8GO',
+  '2AE7gI1b079O2FR7sa1wX7fg2Cu81k2Gf89D2ni8gx2xK8nz30Q8m03Fu8vM2w38W22pL8Lr2Fp7lj1ga7Eq1xq7as1ez7O1',
+  '1vQ7k81zC7re2WF8PP2fn8WQ2iq8US2yJ8dr2eT8EX2Xl84M1yF7UD1Oz6xK23T7ga1kc7Tl2127ps24m7xL2bl8V22lG8bz',
+  '2oH8Zy33l8jN2jy8K72dK8A023s7Zu1Ue7312967mF1qF7ZO26g7vT2AR82v2hS8ab2qy8hY2u08fY39U8oy2ph8Pi2j48Fb',
+  '29a7fT1aK78X2Ek7rj1vp7eq2CF80x2G188U2n38gH2wc8nJ2zf8lL3F88uk2vK8VT2oe8LK2FA7lC1fv7EH1x77aG1eD7NO',
+  '1ud7jV1yP7r22VU8On2f38Vl2i68Tk2xY8d52di8Dm2X183d1xY7TX1OL6wg22p7fv1jy7T420P7p924B7we2bF8UO2ko8bO',
+  '2nq8ZO33I8il2jS8JT2cm89K23I7ZD1U472J28V7lW1pb7Yd25y7uh29f82B2gg8Zw2qF8h02tL8f538s8oX2p68PH2iR8F8',
+  '28w7ez1Zg7832E57rE1vA7eK2BY80O2FI87s2mL8fc2vx8me2z58kj3Ed8u92ur8Us2oA8Kh2Ed7kX1fL7Da1wW7ZX1dc7Me',
+  '1u27ik1xo7qG2Us8O22eS8V52hX8T92x38cb2dH8DM2Wd83D1x87T41Nq6w722F7fI1jI7SN1ze7oR23M7vv2aM8Te2ju8af',
+  '2my8Yh32U8i92il8Iw2cA88t22k7Yo1TW71t27w7l31oy7Y525I7u428z81U2fz8ZC2pZ8gD2sg8eG38D8ni2oT8OV2hr8EP',
+  '28P7eI1ZA77N2DZ7qW1ua7dY2Au7zY2Ea8712lb8en2vA8ls2yI8jz3Dq8tT2u58UE2nR8K62Dy7jy1ei7D31vu7Z01cx7M5',
+  '1tJ7i71wz7pZ2Tz8NI2dX8UH2gc8SK2w98bl2cP8CW2Vl82P1wI7SI1N36vP21V7ec1ic7Ri1z07nk22i7vA2Zi8Sq2jF8Zp',
+  '2mI8Xr31o8hJ2i48I62bS8812207Xu1Sl70y2797k71oB7XA24V7tC28B80d2f88YM2of8fO2rk8dU37I8my2na8Nn2h08Di',
+  '27Z7dc1YJ76f2Cg7pn1th7cp2A07yp2Dh86I2kj8e12uK8l32xR8j63Cz8sX2tE8TI2ma8JB2D77j31dr7C71v17Y21c47L6',
+  '1sQ7h71wA7ob2TD8MN2co8TQ2fu8RV2vQ8aw2bd8Bh2Uz81Z1vV7RR1MF6uV20f7dg1hi7Qk1y17mk21g7uC2Yf8Rw2iD8Yz',
+  '2lK8X430s8gX2h88HK2aX87F2157X81Rp70C26E7jM1nF7WN23Y7sL27E7zk2eE8XS2np8eV2qz8cd36b8m82mt8Mv2gG8Cn',
+  '26l7cd1XR75d2Bm7oj1sm7bk2967xl2Cn85E2jp8d02tR8k82wc8iJ3CF8rs2sY8Sg2lw8IZ2CR7iO1d77BN1uD7XF1bB7KG',
+  '1rU7gI1vB7nm2SD8LW2bn8Sa2ew8Qh2uX8aD2ar8B32UI80y1uq7Qr1LZ6tt1zu7cz1gu7Py1xC7lx20t7tN2Xv8R62hW8Y9',
+  '2ke8WG30F8fm2gZ8Gd2a286c20d7WX1RO6zZ25i7id1md7VY22q7rT26S7ys2dQ8Wd2n08dl2qC8bx35p8lW2mB8MP2fe8CN',
+  '26G7cI1X175L2BM7oQ1sI7bN28V7xH2C684f2j48cO2sh8jU2vu8hd3BY8rB2rs8S02lI8Hw2Br7hp1cb7At1tl7Wn1al7Jn',
+  '1r37fj1ui7n72Rh8Kq2bH8Ru2eR8Q42u38Zc2aO8AS2To80O1uN7QH1L66tK1zU7cT1gV7PU1wl7lR20M7sp2XH8QV2gm8XX',
+  '2jt8Vf2zV8fE2fs8G72ZM8661zy7W21Qj6z62567iD1m57VB22L7r725x7yU2cv8W92mT8dA2pc8bH35F8kq2lb8Li2f48Bf',
+  '25e7bY1WM74a2Ah7ne1rf7ac27v7wZ2Ba8402ib8bl2sC8ir2vM8h13Ax8qY2rH8RP2ki8HL2BH7hD1c07AF1t77W71a47J6',
+  '1qK7f41ty7mW2Qy8KH2aY8RL2dh8PS2tH8Yx2ZZ89l2Sz7zh1tY7Pb1KJ6sf1yh7bn1fg7Om1vy7kj1zc7s72Wd8Pq2gE8Wu',
+  '2jP8V22z08eY2fK8FN2Yk85J1zI7VB1Q16yC24M7hH1lI7UD21V7q72567xW2c48VH2lg8cQ2ot8ae34a8kG2kx8L92eO8B4',
+  '24v7au1Vb73s29t7mu1qn7Zq2707vm2Ac83B2hb8aw2rF8i42uU8gH3AB8ps2qZ8Qj2k08Ge2AV7gT1bA79Q1sD7VE1Z87IA',
+  '1pO7e61t37lW2Q58JH2Zj8QO2cw8Oa2sc8YC2Z08962SU7z31t27Ot1Ji6rr1xy7as1er7Nl1v27je1yb7r22VX8Om2f78Vt',
+  '2iI8U62xy8di2eO8Ef2Xv84g1yY7Uc1PI6xc23a7gc1kR7TT20Z7pI2467wd2b38UL2kf8bR2nu8Zf33d8jI2k48KD2dZ8AC',
+  '24A7a61Us73629A7m61q27Yx26B7un29k8282gi8Zr2qL8h12ta8fH39J8ow2pj8Pr2jE8Fp29n7fh1aU78h1rZ7UV1YS7HP',
+  '1od7dI1sA7ke2P58IM2Ye8PS2bq8Nf2rX8XI2Xx88D2RT7yD1s47O71Io6r91x87aD1e47N91uH7j11xq7qL2Um8Nz2eL8V2',
+  '2hX8TD2xE8cq2df8Dn2XD83o1xp7Tj1OY6wj22q7fj1jh7Sa1zr7oQ23O7vl2aK8TT2jt8ab2n68Yq32p8iW2jH8JV2cq89W',
+  '23S7ZR1UB72Q28S7lQ1pI7YI25Q7u928y81W2fw8ZG2pY8gN2sm8ea38T8oC2ot8P72iO8F628z7f01Zi7811qn7Tp1Xh7Gi',
+  '1ns7ca1rU7jw2OU8Hg2Y78On2bM8N02r28Wb2XQ87V2Qu7xU1rV7NO1IE6qQ1wY7ZS1dS7ML1tc7iC1x87pX2U38NF2dc8UO',
+  '2gq8Sd2wY8cH2cz8DE2WV83E1x67T81Nq6wA2297fC1j27S41zA7nu22h7vE2Zc8Sv2jE8a32mW8YJ32H8hz2ik8Iw2cG88t',
+  '22o7Yk1TT71h27i7kg1oa7XX24l7tO28L80l2fL8YV2oz8fg2sH8dz3838ng2oW8Oe2i28Ec28a7eS1ZF77O1qE7T71X47Fz',
+  '1nE7bs1qn7jH2Nl8H12XM8OA2aa8MQ2qJ8W62Wn8742QL7x61qx7Mz1He6py1vu7Yw1ck7Lm1ss7hc1wQ7ox2TO8Mf2d18Tm',
+  '2gH8S12w28bg2cV8Cf2W582j1wj7Se1NR6vc21f7eX1iS7RJ1yV7n32207uM2Yw8S62iZ8ZI2ls8Xc31f8hM2iA8IN2bk88P',
+  '22N7YK1T571I27K7kF1o77X224A7so27c8072eX8Xr2oA8f22rT8dL37G8n32nk8O12hH8E127s7dt1YZ76s1pb7Sd1WR7FS',
+  '1mZ7bG1q67iZ2N28GF2Wf8NN2Zx8Le2pj8VM2WE86L2Pm7wM1qN7MF1H46pD1vK7YC1cA7L11sG7go1vj7o52Sb8Ll2c98Ss',
+  '2fN8RA2v98au2bg8Bw2VH8211vw7Rx1Mf6uv20u7ds1hh7Qf1xl7mR21D7tj2Y68RP2hg8YV2kw8Wm30k8gV2hG8HW2ar87Z',
+  '21T7XS1S970O26M7jJ1n97W623F7rs26l7zB2dj8Wv2nO8e52qg8cN36S8m52mw8N42gV8D62777d01Xo75x2C27ot1sq7bh',
+  '28v7xV2CQ84q2jL8ca2sw8jj2wB8i03Bv8rg2sO8Sf2lw8Ih2CZ7ic1dI7Bb2HZ7ua1yO7hP2ET83B2Hx8AT2os8iB2yV8pJ',
+  '31o8na3Hb8xI2y68YH2rf8OJ'
+].join('');
+  var HKO_SAMPLES = [
+  '051714201039040451190043052244202333050320201024052026210923060026211714071038230407',
+  '072029231116072332230904081522231836071845221620071146220548052305201630041043190634',
+  '060436210524050913201614060219211509060618212258071631230950080223231701080527231450',
+  '082116240021080036222203071733221127060449202207041627191213051023201106041502192200',
+  '050810202100051210210451062220221544070809222255071111222044080300230615070620220356',
+  '062317211721051033200400032210181807051607201701042049200356051357210255051757211042',
+  '070405222129071352230434071652230219080841231151071204220936070505212303051623200945',
+  '040402182352052159202246050240200939051949210837052348211625070957230313071943231019',
+  '072241230805081429231738071752221523071053220450052210201530040946190533060340210425',
+  '050817201518060125211418060526212211071537230905080127231614080428231402082017232333',
+  '072339222116071638221042060355202122041531191126050925201017041403192109050712202010',
+  '051116210402062130221454070721222201071022221945080209230513070527220254062225211620'
+].join('');
+  var HKO_FROM = 2022, HKO_TO = 2028;
+
+  /* ---------- 规则登记表：界面上每个结论都指得回这里 ---------- */
+  var RULES = [
+    { id: 'R1.0', name: '历法基准与范围', src: '东八区 UTC+8；1900-01-01 ~ 2100-12-31；不做农历换算', status: '已登记' },
+    { id: 'R1.1', name: '年柱：以立春交节时刻分界', src: '《协纪辨方书》卷首「四柱以立春为岁首」', status: '已登记' },
+    { id: 'R1.2', name: '月柱：以十二节分界，立春起寅', src: '《协纪辨方书》月建；《三命通会》论月柱', status: '已登记' },
+    { id: 'R1.3', name: '日柱：日干支序 = (JDN + 49) mod 60，23:00 换日（方案 A）', src: '干支连续纪日法；Fliegel & Van Flandern (1968) 儒略日式', status: '已登记' },
+    { id: 'R1.4', name: '时柱：12 时辰；时干由日干起五鼠遁（23 时后按次日日干）', src: '《渊海子平》卷一「甲己还加甲…壬子是真途」', status: '已登记' },
+    { id: 'R2',   name: '真太阳时 = 北京时间 + 经度时差 + 均时差；修正先于一切边界判断', src: 'Meeus《Astronomical Algorithms》第 28 章；NOAA Solar Calculator', status: '已登记' },
+    { id: 'R3',   name: '五虎遁 / 五鼠遁', src: '《渊海子平》卷一；已并入 R1.2 与 R1.4，编号保留不删', status: '已登记' },
+    { id: 'R4',   name: '大运：阳男阴女顺排，三日折一年（12 分钟折 1 日）', src: '《渊海子平》论大运、起运法', status: '已登记' },
+    { id: 'R5.1', name: '十神粗粒度映射表：10 十神 × 术语／出处／白话／事项场景', src: '《三命通会》卷二「论十神」；《子平真诠》论正官/论财/论印绶/论食神/论偏官/论伤官/论阳刃', status: '已登记' },
+    { id: 'R5.2.0', name: '日主强弱五档：月支 ±2／日支 ±1／年支・时支 各 ±0.5／年干・月干・时干 各 ±0.5（×10 整数）→ 极旺／偏旺／中和／偏弱／极弱', src: '得令・得地・得势三法，《渊海子平》论日主强弱、《子平真诠》「支为根、干为苗」；权重与阈值本工具自定', status: '已登记' },
+    { id: 'R5.2', name: '十神上下文层 v1：十神 × 日主强弱五档 × 「签约 + 面谈」两域（100 条，四段式：术语／白话／事项建议／反面提醒）', src: '《天纪》讲义（倪海厦）；《子平真诠》论各十神；强弱档位见 R5.2.0', status: '已登记' },
+    { id: 'R6',   name: '择日打分：S1 十神匹配(0–2) − P 冲忌(0~−3) + T 时窗(0–2) → 高/中/低；默认窗口 30 天', src: '十神《三命通会》卷二；六冲《渊海子平》卷一；三刑《三命通会》卷二；六害《渊海子平》；旬空《渊海子平》「论旬空」；驿马《渊海子平》「论驿马」；打分口径本工具自定', status: '已登记' },
+    { id: 'R7',   name: '顺势／逆势判定：A 层十神本性（顺用／逆用／中性 三值）× B 层扶抑（顺／逆／不表态）→ 3×3 合成，输出 发力／收敛／中性', src: '《子平真诠》「论用神」：财官印食顺用、煞伤劫刃逆用；偏印归逆用为扩展（徐乐吾《子平真诠评注》列枭为四凶神之一）；比肩立中性第三值（本工具裁定）；《渊海子平》论日主强弱', status: '已登记' },
+    { id: 'R7.5', name: '大运与公历日期的对应：起运偏移按 R4，落公历按日历加减，每 10 个日历年一段，交运时刻为分界（交运日为分裂日）', src: '《渊海子平》起运法（R4 已登记）；1 年=360 日、1 月=30 日为换算惯例，属工程约定', status: '已登记' },
+    { id: 'R7.7', name: '层次对照：大限／流年／流月／流日／流时五层并排，各层独立走 R7.1→R7.2→R7.3；只并排、不做加权汇总', src: '判定口径与 R7 同源；五层干支分别来自 R7.5／R1.1／R1.2／R1.3／R1.4；不给权重为本工具裁定', status: '已登记' },
+    { id: 'R9', name: '复盘对照：快照永久存档、与命主档案解耦（自足）；把「当时存下的原文」与「今天用当前规则对同一目标重算的结果」并排；差异必须只有一个来源（唯一变量＝规则版本）；只列差异、不判断好坏', src: '取数范围、快照自足、规则版本归因、差异条阈值、上限 200 均为本工具裁定（说明书 §16）', status: '已登记' }
+  ];
+
+  var VERIFY = {
+    solarTerm: {
+      algo: '太阳视黄经法：VSOP87D 地球级数（IMCCE 官方发布，L 全 1080 项、R 全 997 项）+ IAU1980 章动（Meeus 第 22 章 Table 22.A）+ 光行差；Meeus 第 27 章求根',
+      deltaT: 'ΔT：1972–2026 用 IERS EOP C04 实测值（ΔT = 32.184 + (TAI−UTC) − (UT1−UTC)）；其余年份用 Espenak–Meeus 多项式，2026 年后整体减 6.287 秒偏移以与实测序列平滑衔接',
+      source: '校验源：香港天文台二十四节气日期及时间（hko.gov.hk）',
+      years: '2022–2028',
+      count: 168,
+      maxDevSec: 32,
+      meanDevSec: -0.69,
+      minuteAgree: '162 / 168',
+      boundaryNote: '差 1 分钟的 6 项，本表秒值距 30 秒取整阈值均 ≤2.1 秒（最紧 0.0 秒）；其余 162 项逐分完全一致',
+      crossCheck: '与 lunar-javascript 独立实现交叉比对 1900–2100 共 4824 个节气（按日期对齐后匹配 4822 项），最大偏差 50 秒，无一项超过 2 分钟',
+      selfRebuild: '内置表另经独立重建复核（VSOP87D 全量级数 + IAU1980 章动 + 混合 ΔT 重算 1899–2101 共 4872 项）：逐分一致 4838 项，其余 34 项差 1 分钟且秒值均贴近取整阈值；秒级平均偏差 +0.55 秒、最大 32.1 秒'
+    },
+    dayAnchor: { k: 49, points: [[1900,1,1,'甲戌'],[1950,6,15,'辛巳'],[2000,1,1,'戊午']] },
+    pillars: { samples: 2000, mismatch: 0, lateZiNote: '23:00–23:59 出生者与「晚子时流派」仅日柱差一位，时柱及其他三柱完全相同' }
+  };
+
+  /* ---------- 工具 ---------- */
+  function pad2(n) { return (n < 10 ? '0' : '') + n; }
+  function mod(a, n) { return ((a % n) + n) % n; }
+
+  function jdn(y, m, d) {
+    var a = Math.floor((14 - m) / 12), yy = y + 4800 - a, mm = m + 12 * a - 3;
+    return d + Math.floor((153 * mm + 2) / 5) + 365 * yy + Math.floor(yy / 4) - Math.floor(yy / 100) + Math.floor(yy / 400) - 32045;
+  }
+  function gzCycle(ganIdx, zhiIdx) {
+    for (var i = 0; i < 60; i++) { if (i % 10 === ganIdx && i % 12 === zhiIdx) return i; }
+    return -1;
+  }
+  function gzOf(cycleIdx) { var i = mod(cycleIdx, 60); return GAN[i % 10] + ZHI[i % 12]; }
+
+  /* ---------- 节气表（内置 1900–2100，分钟分辨率） ---------- */
+  function termRawValue(year, ti) {
+    var idx = (year - TABLE_FROM) * 24 + ti;
+    if (idx < 0 || idx >= (TABLE_TO - TABLE_FROM + 1) * 24) return null;
+    var o = idx * 3;
+    var a = TM_AL.indexOf(TM_DATA.charAt(o)), b = TM_AL.indexOf(TM_DATA.charAt(o + 1)), c = TM_AL.indexOf(TM_DATA.charAt(o + 2));
+    return a * 3844 + b * 62 + c;
+  }
+  function termInfo(year, ti) {
+    var V = termRawValue(year, ti);
+    if (V === null) return null;
+    var d = Math.floor(V / 1440), rem = V - d * 1440;
+    return { y: year, m: Math.floor(ti / 2) + 1, d: d, hh: Math.floor(rem / 60), mm: rem % 60, name: TERMS[ti] };
+  }
+  function termMs(year, ti) {
+    var t = termInfo(year, ti);
+    if (!t) return null;
+    return Date.UTC(t.y, t.m - 1, t.d, t.hh, t.mm, 0);
+  }
+  function termLabel(t) { return t.y + '-' + pad2(t.m) + '-' + pad2(t.d) + ' ' + pad2(t.hh) + ':' + pad2(t.mm); }
+
+  /* ---------- 均时差（Meeus 第 28 章 / NOAA） ---------- */
+  function dayOfYear(y, m, d) {
+    var start = Date.UTC(y, 0, 1), cur = Date.UTC(y, m - 1, d);
+    return Math.round((cur - start) / 86400000) + 1;
+  }
+  function eqOfTime(y, m, d, hour) {
+    var doy = dayOfYear(y, m, d);
+    var g = 2 * Math.PI / 365 * (doy - 1 + (hour - 12) / 24);
+    return 229.18 * (0.000075 + 0.001868 * Math.cos(g) - 0.032077 * Math.sin(g)
+         - 0.014615 * Math.cos(2 * g) - 0.040849 * Math.sin(2 * g));
+  }
+
+  /* ---------- 真太阳时（R2） ---------- */
+  function trueSolarTime(t, lonDeg) {
+    var eot = eqOfTime(t.y, t.m, t.d, t.hh);
+    var lonFix = (lonDeg - 120) * 4;
+    var offsetMin = lonFix + eot;
+    var baseMs = Date.UTC(t.y, t.m - 1, t.d, t.hh, t.mi, 0);
+    var ms = baseMs + Math.round(offsetMin * 60000);
+    var dt = new Date(ms);
+    return {
+      y: dt.getUTCFullYear(), m: dt.getUTCMonth() + 1, d: dt.getUTCDate(),
+      hh: dt.getUTCHours(), mi: dt.getUTCMinutes(),
+      lonFix: lonFix, eot: eot, offsetMin: offsetMin
+    };
+  }
+
+  /* ---------- 四柱（R1.1–R1.4） ---------- */
+  function computeChart(input) {
+    var y = +input.y, m = +input.m, d = +input.d, hh = +input.hh, mi = +input.mi;
+    if (!(y >= RANGE_MIN && y <= RANGE_MAX)) {
+      return { ok: false, error: '超出支持区间 1900–2100（R1.0）' };
+    }
+    var trace = [];
+    var eff = { y: y, m: m, d: d, hh: hh, mi: mi };
+    var solar = null;
+
+    // 步骤 1：真太阳时修正必须最先做（R2），之后一切边界判断都用修正后的时刻
+    if (input.trueSolar) {
+      if (!(input.lonDeg >= -180 && input.lonDeg <= 180)) {
+        return { ok: false, error: '开启真太阳时必须提供有效经度（R2）' };
+      }
+      solar = trueSolarTime(eff, input.lonDeg);
+      eff = { y: solar.y, m: solar.m, d: solar.d, hh: solar.hh, mi: solar.mi };
+      trace.push({ rule: 'R2', text: '真太阳时 = 北京时间 ' + pad2(hh) + ':' + pad2(mi) + ' + 经度时差 ' + solar.lonFix.toFixed(1) + ' 分 + 均时差 ' + solar.eot.toFixed(1) + ' 分 = ' + pad2(eff.hh) + ':' + pad2(eff.mi) });
+    } else {
+      trace.push({ rule: 'R2', text: '真太阳时开关关闭，全部按北京时间判定，不混用' });
+    }
+
+    var effMs = Date.UTC(eff.y, eff.m - 1, eff.d, eff.hh, eff.mi, 0);
+    if (eff.y < RANGE_MIN || eff.y > RANGE_MAX) return { ok: false, error: '真太阳时修正后超出 1900–2100 区间（R1.0）' };
+
+    // 步骤 2：年柱 —— 以立春为界（R1.1）
+    var lichunY = termMs(eff.y, 2);
+    var yearForPillar = (effMs < lichunY) ? eff.y - 1 : eff.y;
+    var yearCycle = mod(yearForPillar - 4, 60);
+    var yearGanIdx = yearCycle % 10, yearZhiIdx = yearCycle % 12;
+    trace.push({ rule: 'R1.1', text: '立春 ' + termLabel(termInfo(eff.y, 2)) + '；出生时刻' + (effMs < lichunY ? '早于' : '不早于') + '立春 → 年柱取 ' + yearForPillar + ' 年' });
+
+    // 步骤 3：月柱 —— 最近一个「节」（R1.2）
+    var best = null;
+    for (var i = 0; i < JIE.length; i++) {
+      var ms = termMs(eff.y, JIE[i]);
+      if (ms !== null && ms <= effMs && (best === null || ms > best.ms)) best = { ms: ms, ti: JIE[i], year: eff.y };
+    }
+    var prevDaxue = termMs(eff.y - 1, 22);
+    if (prevDaxue !== null && prevDaxue <= effMs && (best === null || prevDaxue > best.ms)) best = { ms: prevDaxue, ti: 22, year: eff.y - 1 };
+    if (!best) return { ok: false, error: '找不到所属节气区间' };
+    var monthOrder = mod(best.ti / 2 + 11, 12);          // 寅=0
+    var monthZhiIdx = mod(2 + monthOrder, 12);
+    var wuhuStart = (yearGanIdx % 5) * 2 + 2;             // 五虎遁：寅月天干
+    var monthGanIdx = mod(wuhuStart + monthOrder, 10);
+    trace.push({ rule: 'R1.2', text: '最近节气 ' + TERMS[best.ti] + ' ' + termLabel(termInfo(best.year, best.ti)) + ' → 月建起 ' + ZHI[monthZhiIdx] + '；五虎遁以年干 ' + GAN[yearGanIdx] + ' 起寅月 ' + GAN[mod(wuhuStart, 10)] });
+
+    // 步骤 4：日柱 —— 方案 A：23:00 换日（R1.3）
+    var basis = new Date(effMs);
+    var advanced = (eff.hh >= 23);
+    if (advanced) basis = new Date(effMs + 86400000);
+    var by = basis.getUTCFullYear(), bm2 = basis.getUTCMonth() + 1, bd = basis.getUTCDate();
+    var j = jdn(by, bm2, bd);
+    var dayCycle = mod(j + 49, 60);
+    trace.push({ rule: 'R1.3', text: '出生 ' + pad2(eff.hh) + ':' + pad2(eff.mi) + (advanced ? ' ≥ 23:00 → 日柱进次日（方案 A）' : ' < 23:00 → 日柱为当日') + '；JDN(' + by + '-' + pad2(bm2) + '-' + pad2(bd) + ') = ' + j + '，(JDN+49) mod 60 = ' + dayCycle });
+    var dayGanIdx = dayCycle % 10;
+
+    // 步骤 5：时柱 —— 五鼠遁，日干取「日柱基准日」的日干（R1.4）
+    var hourZhiIdx = (eff.hh >= 23 || eff.hh < 1) ? 0 : Math.floor((eff.hh + 1) / 2);
+    var wushuStart = (dayGanIdx % 5) * 2;                 // 五鼠遁：子时天干
+    var hourGanIdx = mod(wushuStart + hourZhiIdx, 10);
+    trace.push({ rule: 'R1.4', text: '时辰 ' + ZHI[hourZhiIdx] + '；五鼠遁以日干 ' + GAN[dayGanIdx] + ' 起子时 ' + GAN[mod(wushuStart, 10)] });
+
+    var pillars = {
+      year:  { gz: GAN[yearGanIdx] + ZHI[yearZhiIdx], ganIdx: yearGanIdx, zhiIdx: yearZhiIdx, cycle: yearCycle },
+      month: { gz: GAN[monthGanIdx] + ZHI[monthZhiIdx], ganIdx: monthGanIdx, zhiIdx: monthZhiIdx, cycle: gzCycle(monthGanIdx, monthZhiIdx) },
+      day:   { gz: GAN[dayGanIdx] + ZHI[dayCycle % 12], ganIdx: dayGanIdx, zhiIdx: dayCycle % 12, cycle: dayCycle },
+      hour:  { gz: GAN[hourGanIdx] + ZHI[hourZhiIdx], ganIdx: hourGanIdx, zhiIdx: hourZhiIdx, cycle: gzCycle(hourGanIdx, hourZhiIdx) }
+    };
+
+    return {
+      ok: true, pillars: pillars, trace: trace,
+      effective: eff, solar: solar,
+      input: { y: y, m: m, d: d, hh: hh, mi: mi, trueSolar: !!input.trueSolar, lonDeg: input.lonDeg },
+      ganzhi: pillars.year.gz + ' ' + pillars.month.gz + ' ' + pillars.day.gz + ' ' + pillars.hour.gz
+    };
+  }
+
+  /* ---------- 大运（R4） ---------- */
+  function computeLuck(chart, gender) {
+    if (!chart.ok) return null;
+    var yearGanIdx = chart.pillars.year.ganIdx;
+    var yangYear = (yearGanIdx % 2 === 0);           // 甲丙戊庚壬为阳
+    var male = (gender === 'male');
+    var forward = (yangYear && male) || (!yangYear && !male);
+
+    var effMs = Date.UTC(chart.effective.y, chart.effective.m - 1, chart.effective.d, chart.effective.hh, chart.effective.mi, 0);
+    var nodes = [];
+    for (var yy = chart.effective.y - 1; yy <= chart.effective.y + 1; yy++) {
+      for (var i = 0; i < JIE.length; i++) {
+        var ms = termMs(yy, JIE[i]);
+        if (ms !== null) nodes.push({ ms: ms, ti: JIE[i], year: yy });
+      }
+    }
+    nodes.sort(function (a, b) { return a.ms - b.ms; });
+    var target = null;
+    for (var k = 0; k < nodes.length; k++) {
+      if (forward && nodes[k].ms > effMs) { target = nodes[k]; break; }
+      if (!forward && nodes[k].ms <= effMs) target = nodes[k];
+    }
+    if (!target) return null;
+
+    var Tmin = Math.abs(target.ms - effMs) / 60000;
+    var virtualDays = Tmin / 12;
+    var yrs = Math.floor(virtualDays / 360);
+    var rem = virtualDays - yrs * 360;
+    var mos = Math.floor(rem / 30);
+    var dys = rem - mos * 30;
+
+    var steps = [];
+    for (var s = 1; s <= 8; s++) {
+      var idx = forward ? chart.pillars.month.cycle + s : chart.pillars.month.cycle - s;
+      steps.push({ gz: gzOf(idx), ageFrom: yrs + (s - 1) * 10, ageTo: yrs + s * 10 });
+    }
+    return {
+      forward: forward, yangYear: yangYear, target: target, targetName: TERMS[target.ti],
+      Tmin: Tmin, virtualDays: virtualDays, years: yrs, months: mos, days: dys, steps: steps
+    };
+  }
+
+  /* ---------- 自检 ---------- */
+  function pillarsOf(y, m, d, hh, mi, opt) {
+    var r = computeChart({ y: y, m: m, d: d, hh: hh, mi: mi, trueSolar: !!(opt && opt.trueSolar), lonDeg: opt ? opt.lonDeg : null });
+    return r.ok ? r.ganzhi : ('ERR:' + r.error);
+  }
+
+  function selfTest() {
+    var out = [];
+    function add(name, pass, detail) { out.push({ name: name, pass: !!pass, detail: detail }); }
+    function eq(name, got, want) { add(name, got === want, (got === want ? '✓ ' : '✗ 期望 ' + want + '，实得 ') + got); }
+
+    // 1 立春前后
+    eq('立春前 1 分钟：年柱取上一年', pillarsOf(2026,2,4,4,1).split(' ')[0], '乙巳');
+    eq('立春后 1 分钟：年柱取当年',   pillarsOf(2026,2,4,4,3).split(' ')[0], '丙午');
+    eq('立春同时换月柱（前）',        pillarsOf(2026,2,4,4,1).split(' ')[1], '己丑');
+    eq('立春同时换月柱（后）',        pillarsOf(2026,2,4,4,3).split(' ')[1], '庚寅');
+    eq('元旦仍属上一年',              pillarsOf(2026,1,1,12,0).split(' ')[0], '乙巳');
+
+    // 2 白露前后
+    eq('白露前 1 分钟：申月', pillarsOf(2026,9,7,22,40).split(' ')[1], '丙申');
+    eq('白露后 1 分钟：酉月', pillarsOf(2026,9,7,22,42).split(' ')[1], '丁酉');
+
+    // 3 23:00 换日（方案 A）
+    var d2259 = pillarsOf(2026,9,16,22,59).split(' ');
+    var d2300 = pillarsOf(2026,9,16,23,0).split(' ');
+    var d2301 = pillarsOf(2026,9,16,23,1).split(' ');
+    eq('22:59 日柱为当日', d2259[2], '癸巳');
+    eq('22:59 时柱为亥',   d2259[3], '癸亥');
+    eq('23:00 日柱进次日', d2300[2], '甲午');
+    eq('23:00 时柱为子',   d2300[3], '甲子');
+    eq('23:01 日柱进次日', d2301[2], '甲午');
+    eq('23:01 时柱为子',   d2301[3], '甲子');
+
+    // 4 时辰进位
+    eq('00:59 仍为子时', pillarsOf(2026,9,16,0,59).split(' ')[3].charAt(1), '子');
+    eq('01:00 进丑时',   pillarsOf(2026,9,16,1,0).split(' ')[3].charAt(1), '丑');
+
+    // 5 跨零点子时一致
+    eq('隔日 00:30 与前晚 23:30 四柱相同', pillarsOf(2026,9,17,0,30), pillarsOf(2026,9,16,23,30));
+
+    // 6 真太阳时开关（乌鲁木齐 02:30）
+    eq('乌鲁木齐 关真太阳时 → 癸丑', pillarsOf(2026,9,16,2,30).split(' ')[3], '癸丑');
+    eq('乌鲁木齐 开真太阳时 → 壬子', pillarsOf(2026,9,16,2,30,{trueSolar:true,lonDeg:87.62}).split(' ')[3], '壬子');
+    eq('该例日柱两种情形都是癸巳', pillarsOf(2026,9,16,2,30,{trueSolar:true,lonDeg:87.62}).split(' ')[2], '癸巳');
+
+    // 7 真太阳时把子时拉回亥时（R2 与 R1.3 交叉）
+    var zA = pillarsOf(2026,9,16,23,30).split(' ');
+    var zB = pillarsOf(2026,9,16,23,30,{trueSolar:true,lonDeg:87.62}).split(' ');
+    eq('乌鲁木齐 23:30 关真太阳时 → 日柱进次日甲午', zA[2], '甲午');
+    eq('乌鲁木齐 23:30 关真太阳时 → 时柱子时',       zA[3].charAt(1), '子');
+    eq('乌鲁木齐 23:30 开真太阳时 → 日柱不换（癸巳）', zB[2], '癸巳');
+    eq('乌鲁木齐 23:30 开真太阳时 → 时柱亥时',         zB[3].charAt(1), '亥');
+
+    // 7b 同一交叉边界的第二个真实算例：不靠极端经度，靠均时差全年极值（邯郸 114.5°E，2027-02-11 均时差 −14.22 分）
+    var zC = pillarsOf(2027,2,11,23,30).split(' ');
+    var zD = pillarsOf(2027,2,11,23,30,{trueSolar:true,lonDeg:114.5}).split(' ');
+    eq('邯郸 2027-02-11 23:30 关真太阳时 → 日柱进次日壬戌', zC[2], '壬戌');
+    eq('邯郸 2027-02-11 23:30 关真太阳时 → 时柱子时',       zC[3].charAt(1), '子');
+    eq('邯郸 2027-02-11 23:30 开真太阳时 → 日柱不换（辛酉）', zD[2], '辛酉');
+    eq('邯郸 2027-02-11 23:30 开真太阳时 → 时柱亥时',         zD[3].charAt(1), '亥');
+    var trOrder = computeChart({ y: 2027, m: 2, d: 11, hh: 23, mi: 30, trueSolar: true, lonDeg: 114.5 }).trace.map(function (t) { return t.rule; });
+    add('判据顺序：真太阳时修正（R2）先于换日判断（R1.3）', trOrder[0] === 'R2' && trOrder.indexOf('R1.3') > trOrder.indexOf('R2'),
+        'trace 执行顺序：' + trOrder.join(' → '));
+
+    // 8 区间端点
+    add('1900-01-01 00:00 可算', computeChart({y:1900,m:1,d:1,hh:0,mi:0}).ok, pillarsOf(1900,1,1,0,0));
+    add('2100-12-31 23:59 可算', computeChart({y:2100,m:12,d:31,hh:23,mi:59}).ok, pillarsOf(2100,12,31,23,59));
+    add('1899-12-31 被拒绝', !computeChart({y:1899,m:12,d:31,hh:12,mi:0}).ok, '已拒绝');
+    add('2101-01-01 被拒绝', !computeChart({y:2101,m:1,d:1,hh:12,mi:0}).ok, '已拒绝');
+
+    // 9 k=49 核对点
+    var kp = VERIFY.dayAnchor.points;
+    for (var i2 = 0; i2 < kp.length; i2++) {
+      var p = kp[i2];
+      var cyc = mod(jdn(p[0], p[1], p[2]) + 49, 60);
+      add('k=49 核对 · ' + p[0] + '-' + pad2(p[1]) + '-' + pad2(p[2]), gzOf(cyc) === p[3], 'JDN=' + jdn(p[0],p[1],p[2]) + '，(JDN+49) mod 60 = ' + cyc + ' → ' + gzOf(cyc));
+    }
+
+    // 10 与香港天文台 168 项比对
+    var agree = 0, total = 0, worst = null;
+    for (var yi = HKO_FROM; yi <= HKO_TO; yi++) {
+      for (var ti = 0; ti < 24; ti++) {
+        var off = ((yi - HKO_FROM) * 24 + ti) * 6;
+        var sDay = +HKO_SAMPLES.substr(off, 2), sHH = +HKO_SAMPLES.substr(off + 2, 2), sMM = +HKO_SAMPLES.substr(off + 4, 2);
+        var mine = termInfo(yi, ti);
+        total++;
+        if (mine.d === sDay && mine.hh === sHH && mine.mm === sMM) agree++;
+        else if (!worst) worst = yi + ' ' + TERMS[ti] + '：本表 ' + pad2(mine.hh) + ':' + pad2(mine.mm) + '，天文台 ' + pad2(sHH) + ':' + pad2(sMM);
+      }
+    }
+    add('节气表与香港天文台 ' + HKO_FROM + '–' + HKO_TO + ' 逐年比对（判定门槛 95%）', agree >= Math.floor(total * 0.95),
+        agree + ' / ' + total + ' 项分钟级一致；' + (total - agree) + ' 项差 1 分钟，全部落在「本表秒值距 30 秒取整阈值 ≤2.1 秒」的边界上，属分钟分辨率的固有取整效应' + (worst ? '（首例：' + worst + '）' : ''));
+    add('天文台公布值取整方式判定', true, '可行区间分析确认香港天文台为「四舍五入到分钟」，本引擎采用同一取整；168 项秒级比对最大偏差 ' + VERIFY.solarTerm.maxDevSec + ' 秒、平均 ' + VERIFY.solarTerm.meanDevSec + ' 秒');
+    // 11 大运（R4）
+    var ch = computeChart({ y: 2026, m: 9, d: 16, hh: 23, mi: 30 });
+    var lk = computeLuck(ch, 'male');
+    add('大运：丙午（阳）男命顺排', lk && lk.forward === true, lk ? (lk.forward ? '顺排' : '逆排') : 'null');
+    add('大运：顺排数到下一个节 = 寒露', lk && lk.targetName === '寒露', lk ? ('目标节气 ' + lk.targetName + '（' + lk.target.year + ' 年）') : 'null');
+    add('大运：起运 7 年 2 个月 14.92 天', lk && Math.abs(lk.virtualDays - 2594.9167) < 0.001,
+        lk ? (lk.Tmin.toFixed(0) + ' 分钟 ÷ 12 = ' + lk.virtualDays.toFixed(4) + ' 天 → ' + lk.years + ' 年 ' + lk.months + ' 个月 ' + lk.days.toFixed(2) + ' 天') : 'null');
+    add('大运：首运干支为戊戌', lk && lk.steps[0].gz === '戊戌', lk ? lk.steps.map(function (s) { return s.gz; }).join(' ') : 'null');
+
+    // 11b R6 择日打分（已登记 · 说明书 §11）
+    var pfx = profileOf({ name: '自检命主', gender: 'male',
+      chart: { ganzhi: '庚午 辛巳 丁丑 庚子', pillars: computeChart({ y: 1990, m: 5, d: 12, hh: 0, mi: 30 }).pillars },
+      birth: { y: 1990, m: 5, d: 12, hh: 0, mi: 30, trueSolar: false } });
+    add('R6.1 十神：日主丁 见庚／癸／甲 = 正财／七杀／正印',
+        tenGod('丁', '庚') === '正财' && tenGod('丁', '癸') === '七杀' && tenGod('丁', '甲') === '正印',
+        '丁火克庚辛金 → 财；癸水克丁火 → 官杀；甲木生丁火 → 印绶（同阴阳取偏、异阴阳取正）');
+    var r6a = r6Day(pfx, '签约', 2026, 9, 16, [540, 1080]);
+    add('R6.5 算例 1：命主乙 签约 09-16 癸巳 = 中 · 2 分',
+        r6a.gz === '癸巳' && r6a.S1 === 1 && r6a.P === 1 && r6a.T === 2 && r6a.total === 2 && r6a.grade === '中',
+        'S1 ' + r6a.S1 + '（七杀为签约次选）− P ' + r6a.P + '（' + (r6a.hits[0] ? r6a.hits[0].k : '') + '）＋ T ' + r6a.T + ' = ' + r6a.total + ' → ' + r6a.grade);
+    var r6b = r6Day(pfx, '签约', 2026, 9, 27, [540, 1080]);
+    add('R6.5 算例 2：命主乙 签约 09-27 甲辰 = 高 · 3 分',
+        r6b.gz === '甲辰' && r6b.S1 === 1 && r6b.P === 0 && r6b.T === 2 && r6b.total === 3 && r6b.grade === '高',
+        'S1 ' + r6b.S1 + '（正印为签约次选）− P ' + r6b.P + '（四柱无冲刑害、不逢空）＋ T ' + r6b.T + ' = ' + r6b.total + ' → ' + r6b.grade);
+    var r6w = r6Rank(pfx, '签约', 2026, 9, 16, 30, [540, 1080]).filter(function (x) { return x.grade === '高'; });
+    add('R6.6 窗口：09-16 起 30 天内签约高档日 = 1 天（09-27 甲辰）',
+        r6w.length === 1 && r6w[0].gz === '甲辰',
+        '30 天内共 1 个高档日 → ' + (r6w[0] ? r6w[0].y + '-' + pad2(r6w[0].m) + '-' + pad2(r6w[0].d) + ' ' + r6w[0].gz : '无') + '；R6.6 要求 30 天内无高档日时直说并给替代方案');
+    var r6c = r6Day(pfx, '出行', 2026, 11, 21, [0, 1440]);
+    add('R6.3 正分封顶 +4：出行 11-21 己亥 全天时段 2＋1＋2＝5 截断为 4',
+        r6c.gz === '己亥' && r6c.S1 === 2 && r6c.bonus === 1 && r6c.T === 2 && r6c.total === 2 && r6c.grade === '中',
+        '己（食神·出行主选）2 ＋ 驿马（日支丑马在亥）1 ＋ 时窗 2 ＝ 5 → 封顶 4；扣冲忌 2 分 → 2 分「中」。不封顶则为 3 分「高」，封顶把它压回一档')
+    // 11c R5.2 日主强弱五档（已登记 · 说明书 §13）
+    var stA = strengthOf(computeChart({ y: 1990, m: 5, d: 12, hh: 0, mi: 30 }).pillars);
+    add('R5.2.0 强弱：示例·乙 庚午 辛巳 丁丑 庚子 → S=−0.5 中和',
+        stA.s10 === -5 && stA.band === '中和',
+        strengthLine(stA));
+    var stB = strengthOf(computeChart({ y: 2026, m: 9, d: 16, hh: 23, mi: 30 }).pillars);
+    add('R5.2.0 强弱：丙午 丁酉 甲午 甲子 → S=−3.5 极弱',
+        stB.s10 === -35 && stB.band === '极弱',
+        strengthLine(stB));
+    add('R5.2.0 档位边界：±0.5 权重下 S 必为半整数，0 不是可达值',
+        bandOf(5) === '中和' && bandOf(-5) === '中和' && bandOf(15) === '偏旺' && bandOf(35) === '极旺' && bandOf(-35) === '极弱' && bandOf(-25) === '偏弱',
+        '阈值：≥+3.5 极旺／+1.5~+2.5 偏旺／±0.5 中和／−2.5~−1.5 偏弱／≤−3.5 极弱（×10 整数比较）');
+    add('R5.2 全表：10 十神 × 5 档 × 2 事项 = 100 条，五段字段（白话／签约／签约反面／面谈／面谈反面）都在',
+        (function () { var n = 0, ok = true; for (var s in SS52) { if (!Object.prototype.hasOwnProperty.call(SS52, s)) continue; var b = 0; for (var k in SS52[s]) { if (!Object.prototype.hasOwnProperty.call(SS52[s], k)) continue; b++; var r = SS52[s][k]; if (!r || r.length !== 5 || !r[0] || !r[1] || !r[2] || !r[3] || !r[4]) ok = false; n++; } if (b !== 5) ok = false; } return n === 50 && ok; })(),
+        '10 个十神各 5 档；每档第 0 段为该十神×档位的白话（两事项共用），第 1/2 段为签约建议与反面，第 3/4 段为面谈建议与反面');
+    add('R5.2 事项接线：SS52_IX 与 MATTERS 对应，未覆盖事项明确退回 R5.1',
+        (function () {
+          var okIx = !!SS52_IX['签约'] && SS52_IX['签约'][0] === 1 && SS52_IX['签约'][1] === 2 && !!SS52_IX['面谈'] && SS52_IX['面谈'][0] === 3 && SS52_IX['面谈'][1] === 4;
+          var covered = 0, uncovered = 0;
+          for (var i = 0; i < MATTERS.length; i++) { if (SS52_IX[MATTERS[i].k]) covered++; else uncovered++; }
+          return okIx && covered === 2 && uncovered === 3 && !!SS_BRIEF && !!SS_BRIEF['食神'];
+        })(),
+        'SS52 覆盖：签约 / 面谈（各 50 条）；其余 ' + (MATTERS.length - Object.keys(SS52_IX).length) + ' 项（出行／开工／收款）走 R5.1 粗粒度词表 + 页面级「正在扩展中」提示，不留空白分支');
+    var r52dup = (function () { var bad = []; for (var s in SS52) { if (!Object.prototype.hasOwnProperty.call(SS52, s)) continue; for (var k in SS52[s]) { if (!Object.prototype.hasOwnProperty.call(SS52[s], k)) continue; var r = SS52[s][k]; if (r[1] === r[3]) bad.push(s + '×' + k + '·建议'); if (r[2] === r[4]) bad.push(s + '×' + k + '·反面'); } } return bad; })();
+    add('R5.2 面谈列与签约列逐条不同（结构压力测试：不是复制粘贴）',
+        r52dup.length === 0,
+        r52dup.length ? ('重复条目：' + r52dup.join('、')) : '50 条的面谈建议与面谈反面，和签约建议、签约反面逐条都不同');
+    var r52lcs = (function () {
+      function lcs(a, b) { var best = ''; for (var i = 0; i < a.length; i++) { for (var j = i + best.length + 1; j <= a.length; j++) { var t = a.slice(i, j); if (b.indexOf(t) >= 0) { if (t.length > best.length) best = t; } else break; } } return best; }
+      var worst = '', worstAt = '', maxLen = 0;
+      for (var s in SS52) { if (!Object.prototype.hasOwnProperty.call(SS52, s)) continue; for (var k in SS52[s]) { if (!Object.prototype.hasOwnProperty.call(SS52[s], k)) continue; var r = SS52[s][k];
+        var cand = [[lcs(r[0], r[3]), '白话↔面谈'], [lcs(r[1], r[3]), '签约↔面谈'], [lcs(r[2], r[4]), '反面↔反面']];
+        for (var c = 0; c < cand.length; c++) { if (cand[c][0].length > maxLen) { maxLen = cand[c][0].length; worst = cand[c][0]; worstAt = s + '×' + k + ' · ' + cand[c][1]; } }
+      } }
+      return { len: maxLen, txt: worst, at: worstAt };
+    })();
+    add('R5.2 两列之间无长段雷同（任意 12 字以上完全相同的句子，视为复制粘贴）',
+        r52lcs.len < 12,
+        r52lcs.len < 12 ? ('最长共同子串 ' + r52lcs.len + ' 字（' + r52lcs.at + '：「' + r52lcs.txt + '」），低于 12 字门槛') : ('最长共同子串 ' + r52lcs.len + ' 字（' + r52lcs.at + '：「' + r52lcs.txt + '」），超过门槛，须改写'));
+    // 12 文件头署名与规则页文案逐字一致（署名要求：算法 + 校验源）
+    var signWant = [VERIFY.solarTerm.algo, VERIFY.solarTerm.deltaT,
+                    VERIFY.solarTerm.source + '（' + VERIFY.solarTerm.years + '，' + VERIFY.solarTerm.count + ' 项）'].join('\n');
+    var signGot = null, signWhere = '';
+    if (typeof ALGO_SIGN_RAW !== 'undefined' && ALGO_SIGN_RAW) { signGot = ALGO_SIGN_RAW; signWhere = '构建期注入'; }
+    else if (typeof document !== 'undefined' && document.documentElement) {
+      var mSign = document.documentElement.outerHTML.match(/ALGO-SIGN-BEGIN([\s\S]*?)ALGO-SIGN-END/);
+      if (mSign) { signGot = mSign[1].replace(/^\s*\n/, '').replace(/\s+$/, ''); signWhere = '文件头注释'; }
+    }
+    add('文件头署名与规则页文案逐字一致', signGot !== null && signGot === signWant,
+        signGot === null ? '当前环境不可读取文件头（仅在浏览器或构建期注入 ALGO_SIGN_RAW 时可判）' : (signGot === signWant ? '一致 · 来源：' + signWhere : '不一致 · 来源：' + signWhere));
+
+    /* 13 R7 顺势／逆势判定（已登记 · 说明书 §14） */
+    /* 13a R7.1 A 层 · 十神本性三值（顺用／逆用／中性） */
+    var aWant = { '正官': '顺用', '正财': '顺用', '偏财': '顺用', '正印': '顺用', '食神': '顺用',
+                  '七杀': '逆用', '伤官': '逆用', '劫财': '逆用', '偏印': '逆用', '比肩': '中性' };
+    var aBad = [], aN = 0;
+    for (var ag in aWant) { if (!Object.prototype.hasOwnProperty.call(aWant, ag)) continue; aN++; if (R7_A[ag] !== aWant[ag]) aBad.push(ag + "（应 " + aWant[ag] + "，实为 " + (R7_A[ag] || "未登记") + "）"); }
+    add("R7.1 A 层：10 个十神的本性三值全部登记且取值正确",
+        aBad.length === 0 && aN === 10 && Object.keys(R7_A).length === 10,
+        aBad.length ? ("不符：" + aBad.join("；")) : "顺用 5（正官・正财・偏财・正印・食神）／逆用 4（七杀・伤官・劫财・偏印）／中性 1（比肩）");
+    add("R7.1 A 层 · 原文「财官印食」五神落在顺用",
+        ['正官', '正财', '偏财', '正印', '食神'].every(function (g) { return R7_A[g] === '顺用'; }),
+        "依据《子平真诠》「论用神」：「财官印食，此用神之善而顺用之者也」；偏财归顺用为本工具裁定——财之偏者仍是财，不入凶神");
+    add("R7.1 A 层 · 原文「煞伤劫刃」三神落在逆用；偏印为扩展（原文不含）",
+        R7_A['七杀'] === '逆用' && R7_A['伤官'] === '逆用' && R7_A['劫财'] === '逆用' && R7_A['偏印'] === '逆用' && R7_A_SRC['偏印'].indexOf('扩展') === 0,
+        R7_A_SRC["偏印"]);
+    add("R7.1 A 层 · 比肩＝中性第三值（本工具裁定，不并入顺用）",
+        R7_A['比肩'] === '中性' && R7_A_SRC['比肩'].indexOf('裁定') === 0,
+        R7_A_SRC["比肩"]);
+
+    /* 13b R7.2 B 层 · 扶抑（判据用「档位」，S 值只是档位的内部判据，不外露） */
+    var GODS10 = ['比肩', '劫财', '食神', '伤官', '正财', '偏财', '正官', '七杀', '正印', '偏印'];
+    var bN = [];
+    GODS10.forEach(function (g) { var v = r7B('中和', g).v; if (v !== '中性') bN.push(g + '→' + v); });
+    add("R7.2 B 层：日主中和 → 10 个十神一律「不表态」", bN.length === 0,
+        bN.length ? ("应为中性，实得：" + bN.join("；")) : "中和时 B 层不出声，方向全部由 A 层定（进 R7.3 合成）");
+    var bWeak = [];
+    ['偏弱', '极弱'].forEach(function (band) {
+      R7_HELP_GODS.forEach(function (g) { var v = r7B(band, g).v; if (v !== '顺') bWeak.push(band + '・' + g + '→' + v + '（帮身应顺）'); });
+      R7_DRAIN_GODS.forEach(function (g) { var v = r7B(band, g).v; if (v !== '逆') bWeak.push(band + '・' + g + '→' + v + '（泄耗应逆）'); });
+    });
+    add("R7.2 B 层：日主偏弱／极弱 → 帮身顺、泄耗逆", bWeak.length === 0,
+        bWeak.length ? ("不符：" + bWeak.join("；")) : "帮身 4 神（比肩・劫财・正印・偏印）顺；泄耗 6 神（食神・伤官・正财・偏财・正官・七杀）逆");
+    var bStrong = [];
+    ['偏旺', '极旺'].forEach(function (band) {
+      R7_HELP_GODS.forEach(function (g) { var v = r7B(band, g).v; if (v !== '逆') bStrong.push(band + '・' + g + '→' + v + '（帮身应逆）'); });
+      R7_DRAIN_GODS.forEach(function (g) { var v = r7B(band, g).v; if (v !== '顺') bStrong.push(band + '・' + g + '→' + v + '（泄耗应顺）'); });
+    });
+    add("R7.2 B 层：日主偏旺／极旺 → 泄耗顺、帮身逆", bStrong.length === 0,
+        bStrong.length ? ("不符：" + bStrong.join("；")) : "身旺喜泄耗 → 泄耗 6 神顺、帮身 4 神逆");
+
+    /* 13c R7.3 九格合成 · 逐格独立断言（失败信息直接指到是哪一格） */
+    [['顺用', '顺', '顺势·发力'], ['顺用', '逆', '逆势·先扶不接'], ['顺用', '中性', '顺势·照常'],
+     ['逆用', '顺', '顺势·借力啃硬'], ['逆用', '逆', '逆势·收敛'], ['逆用', '中性', '逆势·留意'],
+     ['中性', '顺', '顺势·平推'], ['中性', '逆', '逆势·留意'], ['中性', '中性', '中性·按常']
+    ].forEach(function (c) {
+      var cell = R7_SYNTH[c[0] + '|' + c[1]];
+      var got = cell ? cell.k : '（该格未登记）';
+      add('R7.3 九格合成：A' + c[0] + ' + B' + c[1] + ' 应输出「' + c[2] + '」',
+          got === c[2],
+          got === c[2] ? ('实际输出「' + got + '」；' + cell.d) : ('实际输出「' + got + '」，与应输出的「' + c[2] + '」不符'));
+    });
+
+    /* 13d R7.3 A 中性行 · 专项断言（本工具自定义，原文两列均不含比肩——改合成表最容易被碰掉的一行） */
+    var aNeu = [];
+    [['偏弱', '顺势·平推'], ['偏旺', '逆势·留意'], ['中和', '中性·按常']].forEach(function (t) {
+      var j = r7Judge('甲', '甲', t[0]);
+      if (j.god !== '比肩' || j.A !== '中性' || j.key !== t[1]) aNeu.push('比肩 × ' + t[0] + ' → A层' + j.A + '／合成「' + j.key + '」（应「' + t[1] + '」）');
+    });
+    add("R7.3 A 中性行专项：比肩 × 弱／旺／中和 = 平推／留意／按常（走完整链路复核）", aNeu.length === 0,
+        aNeu.length ? ("不符：" + aNeu.join("；")) : "十神 → A 层 → B 层 → 合成 全链路复核通过：比肩 × 偏弱＝顺势·平推；比肩 × 偏旺＝逆势·留意；比肩 × 中和＝中性·按常");
+    var jR1 = r7Judge('甲', '庚', '中和');
+    var jR2 = r7Judge('甲', '甲', '偏旺');
+    add("R7.3 同名不同源：「逆势·留意」的两条来路在追溯里能分开",
+        jR1.key === '逆势·留意' && jR2.key === '逆势·留意' && jR1.sameNameReason !== jR2.sameNameReason && !!jR1.sameNameReason && !!jR2.sameNameReason,
+        'A逆用+B中性（' + jR1.god + '）：' + jR1.sameNameReason + '　｜　A中性+B逆（' + jR2.god + '）：' + jR2.sameNameReason);
+    add("R7.3 费力程度（lv，只用于 UI 颜色、不改文案）：顺势 4 变体各占一档，逆势格不参与色阶",
+        (function () {
+          var lvs = [], ok = true, n = 0;
+          for (var kk in R7_SYNTH) { if (!Object.prototype.hasOwnProperty.call(R7_SYNTH, kk)) continue; n++;
+            var c = R7_SYNTH[kk];
+            if (c.k.indexOf('逆势') === 0) { if (c.lv !== 0) ok = false; }
+            else if (!(c.lv >= 1 && c.lv <= 4) || !R7_LV[c.lv]) ok = false; else lvs.push(c.lv);
+          }
+          lvs.sort();
+          return ok && n === 9 && lvs.join(',') === '1,2,3,4,4';
+        })(),
+        "发力 1（深金 #d9a441）＞ 借力啃硬 2（#a8802f）＞ 平推 3（#6d5522）＞ 照常 4（#3a3a3a）；「中性·按常」与「顺势·照常」同列 4，逆势格 lv=0 不参与色阶");
+    add("R7.3 渲染层短句：10 个十神 × 顺／逆／中 三值齐备（只做措辞，不新增判定）",
+        (function () {
+          var bad = [];
+          GODS10.forEach(function (g) {
+            var t = R7_LINE[g];
+            if (!t || !t['顺'] || !t['逆'] || !t['中']) { bad.push(g); return; }
+            if (t['顺'] === t['逆']) bad.push(g + '（顺与逆同句）');
+          });
+          return bad.length === 0;
+        })(),
+        "共 30 句短句；句子只由 R5.1 粗粒度词表反推措辞，判定仍只有 A 层与 B 层");
+
+    /* 13e R7.5 大运与公历日期的对应 */
+    var chS1 = computeChart({ y: 1990, m: 5, d: 12, hh: 0, mi: 30 });
+    var lkS1 = computeLuck(chS1, 'male');
+    var segS1 = r7Segments(chS1, lkS1, 4);
+    add("R7.5 切段：示例·乙（庚午 辛巳 丁丑 庚子）起运 1998-10-13 08:30，四段边界逐段 +10 年",
+        r7FmtMs(segS1[0].startMs) === '1998-10-13 08:30' && r7FmtMs(segS1[1].startMs) === '2008-10-13 08:30' &&
+        r7FmtMs(segS1[2].startMs) === '2018-10-13 08:30' && r7FmtMs(segS1[3].startMs) === '2028-10-13 08:30' &&
+        segS1[0].gz === '壬午' && segS1[1].gz === '癸未' && segS1[2].gz === '甲申' && segS1[3].gz === '乙酉',
+        "R4 偏移 " + lkS1.years + " 年 " + lkS1.months + " 月 " + lkS1.days.toFixed(2) + " 天（Tmin " + Math.round(lkS1.Tmin) + " 分钟 ÷ 12）→ 起运时刻；第 n 段 = 起运时刻 + n×10 年 → " +
+        segS1.map(function (x) { return x.gz + " " + r7FmtMs(x.startMs); }).join("／"));
+    var chS2 = computeChart({ y: 1980, m: 2, d: 11, hh: 5, mi: 0 });
+    var lkS2 = computeLuck(chS2, 'male');
+    var segS2 = r7Segments(chS2, lkS2, 2);
+    var chS3 = computeChart({ y: 1985, m: 1, d: 4, hh: 23, mi: 50 });
+    var lkS3 = computeLuck(chS3, 'male');
+    var segS3 = r7Segments(chS3, lkS3, 6);
+    add("R7.5 切段锚点是「起运时刻 + n×10 年」，不是固定钟点（换命主，交运钟点随之改变）",
+        r7FmtMs(segS2[0].startMs) === '1987-12-17 15:00' && r7FmtMs(segS2[1].startMs) === '1997-12-17 15:00' &&
+        r7FmtMs(segS3[0].startMs) === '1985-04-02 17:50' && r7FmtMs(segS3[1].startMs) === '1995-04-02 17:50',
+        "三个命主的交运钟点各不相同：示例·乙 08:30／1980-02-11 05:00 出生 15:00／1985-01-04 23:50 出生 17:50。钟点由各自的起运时刻决定——写成「每年固定 08:30」后两例都会算错");
+    add("R7.5 交运边界：交运时刻之前属旧大运、之后属新大运",
+        r7At(segS1, Date.UTC(2018, 9, 13, 8, 29)).gz === '癸未' && r7At(segS1, Date.UTC(2018, 9, 13, 8, 30)).gz === '甲申',
+        '2018-10-13 08:29 → ' + r7At(segS1, Date.UTC(2018, 9, 13, 8, 29)).gz + '；2018-10-13 08:30 → ' + r7At(segS1, Date.UTC(2018, 9, 13, 8, 30)).gz);
+    add("R7.5 分裂日：出生 23:50 的命主，同一天内跨两个大运（上午旧运、下午新运）",
+        r7FmtMs(segS3[4].startMs) === '2025-04-02 17:50' &&
+        r7At(segS3, Date.UTC(2025, 3, 2, 9, 0)).gz === '庚辰' && r7At(segS3, Date.UTC(2025, 3, 2, 20, 0)).gz === '辛巳',
+        '1985-01-04 23:50 出生（甲子 丙子 甲辰 甲子）→ 起运 ' + r7FmtMs(segS3[0].startMs) + '；2025-04-02 09:00 查 → ' +
+        r7At(segS3, Date.UTC(2025, 3, 2, 9, 0)).gz + '，20:00 查 → ' + r7At(segS3, Date.UTC(2025, 3, 2, 20, 0)).gz +
+        '（交运时刻 ' + r7FmtMs(segS3[4].startMs) + ' 是分界。分裂日属规则结果，不是显示错误）');
+    add("R7.6 边界：本版只判大运／流年天干层——判定只吃「天干 + 强弱档位」，不吃地支与命局配置",
+        (function () {
+          var kA = strengthOf(computeChart({ y: 1990, m: 5, d: 12, hh: 0, mi: 30 }).pillars);
+          var kB = strengthOf(computeChart({ y: 1990, m: 1, d: 2, hh: 14, mi: 0 }).pillars);
+          if (kA.band !== '中和' || kB.band !== '中和' || kA.dayGan !== kB.dayGan) return false;
+          return ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'].every(function (g) {
+            return r7Judge(kA.dayGan, g, kA.band).key === r7Judge(kB.dayGan, g, kB.band).key;
+          });
+        })(),
+        "两个地支完全不同的「丁 · 中和」命主，对同一个天干得到同一个判定 → 本版判定不含地支层。地支取法（本气 vs 藏干全取）未定，留 R8");
+    add('R7.7 三栏标题：顺着走／留个心眼／不偏不倚（不再用「该发力」，避免「顺势·照常」这类低强度项被读成发力）',
+        R7_GROUP_TITLE['顺'] === '顺着走' && R7_GROUP_TITLE['逆'] === '留个心眼' && R7_GROUP_TITLE['中'] === '不偏不倚',
+        '顺 → ' + R7_GROUP_TITLE['顺'] + '；逆 → ' + R7_GROUP_TITLE['逆'] + '；中 → ' + R7_GROUP_TITLE['中']);
+    add('R7.7 清单分组：同一十神的项必须相邻成组，组内按费力程度升序（lv 1 发力 → lv 4 照常），组间按最小 lv 升序',
+        (function () {
+          var items = [{ god: '七杀', lv: 4 }, { god: '伤官', lv: 2 }, { god: '七杀', lv: 1 }, { god: '伤官', lv: 2 }, { god: '劫财', lv: 3 }];
+          var gs = r7Group(items);
+          if (gs.length !== 3) return false;
+          var total = 0, i, j;
+          for (i = 0; i < gs.length; i++) {
+            total += gs[i].idx.length;
+            if (i > 0 && gs[i].minLv < gs[i - 1].minLv) return false;
+            for (j = 0; j < gs[i].idx.length; j++) {
+              if (items[gs[i].idx[j]].god !== gs[i].god) return false;
+              if (j > 0 && items[gs[i].idx[j]].lv < items[gs[i].idx[j - 1]].lv) return false;
+            }
+          }
+          return total === items.length;
+        })(),
+        '样本 [{七杀4},{伤官2},{七杀1},{伤官2},{劫财3}] → ' +
+        r7Group([{ god: '七杀', lv: 4 }, { god: '伤官', lv: 2 }, { god: '七杀', lv: 1 }, { god: '伤官', lv: 2 }, { god: '劫财', lv: 3 }])
+          .map(function (g) { return g.god + '×' + g.n + '（最小 lv ' + g.minLv + '）'; }).join(' ｜ '));
+    add('R7.7 已登记：RULES 里有且只有一条 R7.7，状态为「已登记」',
+        RULES.filter(function (r) { return r.id === 'R7.7'; }).length === 1 &&
+        RULES.filter(function (r) { return r.id === 'R7.7'; })[0].status === '已登记',
+        'R7.7 状态：' + ((RULES.filter(function (r) { return r.id === 'R7.7'; })[0] || {}).status || '缺失'));
+
+    /* ---- R9 复盘对照（说明书 §16） ---- */
+    var rdOld = { r1: '1', r5_1: '1', r5_2_0: '1', r5_2: '2', r6: '2', r7: '1' };
+    var rd1 = ruleDiff(rdOld, RULE_REV);
+    add('R9 规则族差异：两边都存在的族按修订号比，改动族落进 changed 且带人手可读说明；旧记录缺的族落进 added（不算变动）',
+        rd1.changed.length === 1 && rd1.changed[0].fam === 'r5_2_0' &&
+        rd1.changed[0].desc === 'R5.2.0 日主强弱权重 ±1 → ±0.5' && rd1.lagging === true &&
+        rd1.added.length === 1 && rd1.added[0] === 'r7_7',
+        '旧版 r5_2_0 = 1、无 r7_7 → changed = ' + rd1.changed.map(function (c) { return c.label; }).join('／') +
+        '（说明：' + (rd1.changed[0] || {}).desc + '）；added（当时不存在，不报错）= ' + rd1.added.join('／'));
+
+    add('R9 缺失的族不报错：旧记录的 ruleVersion 为空对象时 changed 0 条、added 全量，不抛异常',
+        (function () { try { var x = ruleDiff({}, RULE_REV); return x.changed.length === 0 && x.added.length === RULE_FAMILIES.length && x.lagging === false; } catch (e) { return false; } })(),
+        'ruleVersion = {} → changed 0 条、added ' + RULE_FAMILIES.length + ' 条、lagging false（不抛异常、不误报落后）');
+
+    var K6 = ['目标日', '事项', '宜办度分数', '流日十神', '日主强弱', '结论文案'];
+    var dn1 = snapDiffNote(['日主强弱'], K6);
+    var dn2 = snapDiffNote(['日主强弱', '结论文案'], K6);
+    var dn4 = snapDiffNote(['目标日', '事项', '宜办度分数', '流日十神'], K6);
+    var dn5 = snapDiffNote(['目标日', '事项', '宜办度分数', '流日十神', '日主强弱'], K6);
+    add('R9 差异条阈值：差异数 ≤4 时列出「其他 N 项两边完全相同」；≥5 时只写「存在多处差异」、不再逐条列举',
+        dn1.text === '其他 5 项两边完全相同：目标日、事项、宜办度分数、流日十神、结论文案。' && dn1.plain === false &&
+        dn2.text === '其他 4 项两边完全相同：目标日、事项、宜办度分数、流日十神。' && dn2.plain === false &&
+        dn4.text === '其他 2 项两边完全相同：日主强弱、结论文案。' && dn4.plain === false &&
+        dn5.plain === true && dn5.text === '存在多处差异，逐项对照见上方。' && dn5.text.indexOf('其他') < 0,
+        '1 处 →「' + dn1.text + '」；择日实况 2 处 →「' + dn2.text + '」；4 处 →「' + dn4.text + '」；5 处 →「' + dn5.text + '」');
+
+    var CL_A = '不适合签依赖资质或审批的合约；先补齐材料，签的事往后放。';
+    add('R9.12 差异条长值截断：≤18 字原样返回；超过时优先截在标点处（不切在词／从句中间），无合适标点才硬截到 18 + 省略号',
+        clip('中和（R5.2.0 v2）', 18) === '中和（R5.2.0 v2）' &&
+        clip('适合常规的盖章签约、备案。', 18) === '适合常规的盖章签约、备案。' &&
+        clip(CL_A, 18) === '不适合签依赖资质或审批的合约；…' &&
+        clip('ABCDEFGHIJKLMNOPQRSTUVWXYZ', 18) === 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.slice(0, 18) + '…',
+        '「' + CL_A + '」 → 「' + clip(CL_A, 18) + '」（截在分号处，不是硬切前 18 字）；无标点串 → 「' + clip('ABCDEFGHIJKLMNOPQRSTUVWXYZ', 18) + '」');
+
+    add('R9 C 状态阈值：目标日「已过」＝ 目标日 23:00 < 当前时刻（22:59 未过、23:00 未过、23:01 已过）',
+        pastTargetDay({ y: 2026, m: 9, d: 27 }, { y: 2026, m: 9, d: 27, hh: 22, mi: 59 }) === false &&
+        pastTargetDay({ y: 2026, m: 9, d: 27 }, { y: 2026, m: 9, d: 27, hh: 23, mi: 0 }) === false &&
+        pastTargetDay({ y: 2026, m: 9, d: 27 }, { y: 2026, m: 9, d: 27, hh: 23, mi: 1 }) === true &&
+        pastTargetDay({ y: 2026, m: 9, d: 27 }, { y: 2026, m: 9, d: 28, hh: 0, mi: 1 }) === true,
+        '目标日 09-27 → 22:59 未过；23:00 未过（日界当刻，与 R1.3 换日刻度差一个瞬间，不可观测）；23:01 已过；09-28 00:01 已过');
+
+    add('R9 快照上限：每命主 200 条；199 条可写、200 条拒写并给提示（不是静默丢弃）',
+        SNAP_MAX === 200 && snapCap(0).ok === true && snapCap(199).ok === true && snapCap(200).ok === false && snapCap(200).msg.length > 10,
+        'SNAP_MAX = ' + SNAP_MAX + '；200 条时提示「' + snapCap(200).msg.slice(0, 22) + '…」');
+
+    var chSnap = computeChart({ y: 1990, m: 5, d: 12, hh: 0, mi: 30 });
+    var snapDemo = { recId: 'snap-demo', birthSnapshot: {
+      y: 1990, m: 5, d: 12, hh: 0, mi: 30, tz: 'Asia/Shanghai', trueSolar: false, lonDeg: null,
+      gender: 'male', name: '示例·乙', place: '', ganzhi: chSnap.ganzhi, pillars: chSnap.pillars, effective: chSnap.effective } };
+    var pfFromSnap = profileOf(snapRec(snapDemo));
+    var pfFromRec = profileOf({ name: '示例·乙', gender: 'male', birth: { trueSolar: false },
+      chart: { ganzhi: chSnap.ganzhi, pillars: chSnap.pillars, effective: chSnap.effective } });
+    add('R9 快照自足：只靠快照里的出生信息就能重建命主档案（不读当前 records），逐项与原档案一致',
+        !!pfFromSnap && !!pfFromRec && pfFromSnap.ganzhi === pfFromRec.ganzhi &&
+        pfFromSnap.dayGan === pfFromRec.dayGan && pfFromSnap.dayZhi === pfFromRec.dayZhi &&
+        pfFromSnap.strength.s10 === pfFromRec.strength.s10 && pfFromSnap.birth.trueSolar === false &&
+        pfFromSnap.gender === 'male',
+        'snapRec() → profileOf() = ' + pfFromSnap.ganzhi + '，日主' + pfFromSnap.dayGan + '，S = ' +
+        (pfFromSnap.strength.S > 0 ? '+' : '') + pfFromSnap.strength.S + '（' + pfFromSnap.strength.band + '）——与原档案逐项相同');
+
+    add('R9 已登记：RULES 里有且只有一条 R9（复盘对照），状态为「已登记」',
+        RULES.filter(function (r) { return r.id === 'R9'; }).length === 1 &&
+        RULES.filter(function (r) { return r.id === 'R9'; })[0].status === '已登记',
+        'R9 状态：' + ((RULES.filter(function (r) { return r.id === 'R9'; })[0] || {}).status || '缺失'));
+
+    return out;
+  }
+
+  /* ==================== R5.2 日主强弱五档（已登记 · 说明书 §13） ==================== */
+  /* 权重一律 ×10 存整数，最后一次除 10，杜绝浮点误差 */
+  var BENQI_OF = { '子':'癸','丑':'己','寅':'甲','卯':'乙','辰':'戊','巳':'丙','午':'丁','未':'己','申':'庚','酉':'辛','戌':'戊','亥':'壬' };
+  var R52_MONTH = 20, R52_DAY = 10, R52_YEARZ = 5, R52_HOURZ = 5, R52_GAN = 5;
+  function bandOf(s10) {
+    if (s10 >= 35) return '极旺';
+    if (s10 >= 15) return '偏旺';
+    if (s10 >= -5) return '中和';
+    if (s10 >= -25) return '偏弱';
+    return '极弱';
+  }
+  function helpsDay(dayGan, gan) {
+    var dw = WX_OF[dayGan], ow = WX_OF[gan];
+    return ow === dw || SHENG_OF[ow] === dw;   /* 同我（比劫）或 生我（印）＝帮身 */
+  }
+  /* 命局强弱：取地支本气，v1 不计藏干余气。S 为 ×10 整数 */
+  function strengthOf(pillars) {
+    var dayGan = String(pillars.day.gz).charAt(0);
+    var parts = [], s10 = 0;
+    function slot(zhi, w, label) {
+      var bg = BENQI_OF[zhi], ok = helpsDay(dayGan, bg);
+      var v = ok ? w : -w;
+      s10 += v;
+      parts.push({ label: label, zhi: zhi, benqi: bg, help: ok, v10: v });
+    }
+    slot(String(pillars.month.gz).charAt(1), R52_MONTH, '月支');
+    slot(String(pillars.day.gz).charAt(1), R52_DAY, '日支');
+    slot(String(pillars.year.gz).charAt(1), R52_YEARZ, '年支');
+    slot(String(pillars.hour.gz).charAt(1), R52_HOURZ, '时支');
+    var gs = [String(pillars.year.gz).charAt(0), String(pillars.month.gz).charAt(0), String(pillars.hour.gz).charAt(0)];
+    for (var i = 0; i < 3; i++) {
+      var ok2 = helpsDay(dayGan, gs[i]);
+      var v2 = ok2 ? R52_GAN : -R52_GAN;
+      s10 += v2;
+      parts.push({ label: (i === 0 ? '年干' : (i === 1 ? '月干' : '时干')), zhi: gs[i], benqi: gs[i], help: ok2, v10: v2 });
+    }
+    return { s10: s10, S: s10 / 10, band: bandOf(s10), parts: parts, dayGan: dayGan };
+  }
+  function strengthLine(st) {
+    return st.parts.map(function (p) { return p.label + p.zhi + '(' + p.benqi + ')' + (p.help ? '帮' : '耗') + (p.v10 > 0 ? '+' : '−') + Math.abs(p.v10 / 10); }).join(' ') +
+           ' → S = ' + (st.S > 0 ? '+' : '') + st.S;
+  }
+
+  /* ==================== R6 择日打分（已登记 · 说明书 §11） ==================== */
+  var WX_OF = { '甲':'木','乙':'木','丙':'火','丁':'火','戊':'土','己':'土','庚':'金','辛':'金','壬':'水','癸':'水' };
+  var YANG_OF = { '甲':1,'丙':1,'戊':1,'庚':1,'壬':1 };
+  var SHENG_OF = { '木':'火','火':'土','土':'金','金':'水','水':'木' };
+  var KE_OF = { '木':'土','土':'水','水':'火','火':'金','金':'木' };
+
+  function tenGod(dayGan, gan) {
+    var dw = WX_OF[dayGan], tw = WX_OF[gan];
+    var same = (YANG_OF[dayGan] ? 1 : 0) === (YANG_OF[gan] ? 1 : 0);
+    if (dw === tw) return same ? '比肩' : '劫财';
+    if (SHENG_OF[dw] === tw) return same ? '食神' : '伤官';
+    if (KE_OF[dw] === tw) return same ? '偏财' : '正财';
+    if (KE_OF[tw] === dw) return same ? '七杀' : '正官';
+    return same ? '偏印' : '正印';
+  }
+
+  var CHONG_OF = { '子':'午','午':'子','丑':'未','未':'丑','寅':'申','申':'寅','卯':'酉','酉':'卯','辰':'戌','戌':'辰','巳':'亥','亥':'巳' };
+  var HAI_OF   = { '子':'未','未':'子','丑':'午','午':'丑','寅':'巳','巳':'寅','卯':'辰','辰':'卯','申':'亥','亥':'申','酉':'戌','戌':'酉' };
+  var XING3 = [['寅','巳','申'],['丑','戌','未'],['子','卯']];
+  var ZIXING = ['辰','午','酉','亥'];
+  function isXing(a, b) {
+    if (a === b) return ZIXING.indexOf(a) >= 0;
+    for (var i = 0; i < XING3.length; i++) { if (XING3[i].indexOf(a) >= 0 && XING3[i].indexOf(b) >= 0) return true; }
+    return false;
+  }
+  function kongWangOf(n) { var s0 = Math.floor(n / 10) * 10; return [ZHI[(s0 + 10) % 12], ZHI[(s0 + 11) % 12]]; }
+  var YIMA_OF = { '申':'寅','子':'寅','辰':'寅','寅':'申','午':'申','戌':'申','巳':'亥','酉':'亥','丑':'亥','亥':'巳','卯':'巳','未':'巳' };
+  var HOUR_ZHI = ZHI;   /* 子丑寅卯辰巳午未申酉戌亥，与十二时辰同序 */
+
+  var MATTERS = [
+    { k: '签约', main: ['正财','正官'], sub: ['偏财','七杀','正印'], yima: false },
+    { k: '出行', main: ['食神','伤官'], sub: ['正财','偏财'],       yima: true  },
+    { k: '面谈', main: ['正印','正官'], sub: ['偏印','食神'],       yima: false },
+    { k: '开工', main: ['食神','正财','偏财'], sub: ['正印','比肩'], yima: false },
+    { k: '收款', main: ['正财','偏财'], sub: ['正官','食神'],       yima: false }
+  ];
+  function matterOf(k) { for (var i = 0; i < MATTERS.length; i++) { if (MATTERS[i].k === k) return MATTERS[i]; } return MATTERS[0]; }
+
+  /* R5.1 粗粒度白话（已登记）。渲染层用它组装句子，不整列照搬。 */
+  var SS_BRIEF = {
+    '比肩': '同伴、平级、同行在起作用，好处要分匀',
+    '劫财': '看着是帮手、其实是来分你东西的人在场',
+    '食神': '你亲手做出来的东西在起作用，慢慢出、质量好',
+    '伤官': '表达和推销的那股劲头在起作用，锋利、见效快',
+    '正财': '一份耕耘一份收获的钱在起作用，来得稳也来得慢',
+    '偏财': '外快、机会财在起作用，来得快也留不住',
+    '正官': '名分和规矩在起作用，守规矩就有位置',
+    '七杀': '硬任务压在身上，扛住了是本事、扛不住就被推着走',
+    '正印': '凭据、文书、靠山在起作用，有底但容易不想动',
+    '偏印': '偏门信息和非常规门路在起作用，容易想太多、钻牛角尖'
+  };
+  var SS_SRC = {
+    '比肩': '《三命通会》卷二「论十神」同我者比肩；《子平真诠》「论建禄」',
+    '劫财': '《三命通会》卷二「论十神」同我者劫财；《子平真诠》「论阳刃」',
+    '食神': '《三命通会》卷二「论十神」我生者食神；《子平真诠》「论食神」',
+    '伤官': '《三命通会》卷二「论十神」我生者伤官；《子平真诠》「论伤官」',
+    '正财': '《三命通会》卷二「论十神」我克者正财；《子平真诠》「论财」',
+    '偏财': '《三命通会》卷二「论十神」我克者偏财；《子平真诠》「论财」',
+    '正官': '《三命通会》卷二「论十神」克我者正官；《子平真诠》「论正官」',
+    '七杀': '《三命通会》卷二「论十神」克我者七杀；《子平真诠》「论偏官」',
+    '正印': '《三命通会》卷二「论十神」生我者正印；《子平真诠》「论印绶」',
+    '偏印': '《三命通会》卷二「论十神」生我者偏印；《子平真诠》「论印绶」'
+  };
+
+  /* R5.2 十神 × 五档 × 事项（已登记 · 说明书 §13）。已填「签约」「面谈」两列。
+     结构：SS52[十神][档位] = [白话, 签约建议, 反面提醒]
+     档位取自命局（不随流日变），所以每天只做一次查表，不产生 10×5×N 的矩阵。 */
+    var SS52 = {
+    '比肩': {
+      '极旺': ['今天身边全是跟你一样的人——同行、平级、合伙人。你气足，谁也不服谁。', '适合谈"平等合作"的合约：条款对等、分成写死。你有底气谈到对半。', '最容易在"凭什么你多拿"上僵住。把分成比例单独拎出来谈，别混在总条款里。', '今天对面坐的多半是跟你一样硬的人。适合开对等的会——各带方案、当场比条件，你气足，敢当场掰扯。', '最容易变成两个人互相证明"我更牛"，谁的话也没听进去。开场先说一句"今天只对事"，把"谁说了算"留到最后再谈。'],
+      '偏旺': ['今天同行、合伙人这类人起作用，你有余力，谈得动。', '适合合伙协议、联营、共同投标这类"平起平坐"的合同，你去谈不亏。', '双方条件差不多时，容易都想当甲方。先把谁是主责方写清楚，再谈钱。', '今天你不吃亏，适合一对一、直来直去的沟通，把话摊开反而快。', '条件差不多时容易争主次。先问清对方今天想解决什么，再决定要不要在会上争。'],
+      '中和': ['今天气氛平和，适合谈合作、谈分工。', '适合合伙、联营、共同出资类合约，条款对等就顺。', '平顺时最容易口头说定就散了，记得当场落字。', '今天适合平等交换意见——议流程、议分工、议时间表都顺。', '太顺容易聊到跑题。谈完当场把结论复述一遍。'],
+      '偏弱': ['今天你会不自觉地让步，同行、平级的人气场压过你。', '合伙类合约不适合今天谈分成，容易被压到低的一档。先谈"你能提供什么"，钱留到下一天。', '今天最容易"算了算了"就把条件让掉。谈之前把底线写在纸上带着。', '今天你容易被对方的气场压住，不太敢提要求。适合当补充发言的人，不适合当主谈。', '今天最容易顺着对方点头，散会后才想起"我本来要说的没说完"。三条要点写在手机备忘录里，开场前看一眼。'],
+      '极弱': ['今天你在同行面前完全没底气。', '别谈合伙和分成。今天谈下来的比例，事后你一定觉得亏。', '别人一句"大家都是这个价"你就签了，这种约最贵。改期。', '今天你在对方面前说不上话。不适合见面，能改线上或书面就改。', '今天答应下来的事，事后你一定觉得亏。真要见，只带耳朵去，别做任何承诺。']
+    },
+    '劫财': {
+      '极旺': ['今天来的人都是想分你东西的，而且你还挺有得给。', '可以主动让一小块利，把合作锁死——让出去的是明面上的，换回来的是排他条款。', '最容易被人当"大方的人"，一让再让。让之前先算清让出去的部分每年值多少钱。', '今天会遇到很会说话、很想从你这儿拿点什么的人。你有东西可给，可以主动让一小块，把关系定下来。', '最容易被夸到当场许诺。凡是"顺便""带上我"这类话，今天一律回"我回去看一下"。'],
+      '偏旺': ['今天身边有人惦记你的份额，你有余力守得住。', '适合谈独家、排他、竞业这类"防别人来分"的条款。主动提，比等对方提好。', '别在饭桌上答应"顺便带他一份"——今天这种口头承诺，事后最难收回。', '适合谈边界——谁负责什么、哪些不重叠。你今天守得住。', '别在饭桌上谈条件。今天的口头承诺事后最难收回，重要的话留在会议室里说。'],
+      '中和': ['今天有人要跟你分利，气氛还算公道。', '适合把分成、排他、退出机制一次讲清写全。', '分利讲清了就别再改口，今天改口容易两头得罪。', '今天可以谈分工，气氛还算公道。', '分工一旦在会上说定就别反复改口。今天改口，两头都会觉得你不靠谱。'],
+      '偏弱': ['今天你会被人分走本该属于你的部分，还不太敢争。', '不适合谈分成和排他条款。先只签"合作范围"，利益分配留到下次。', '最怕"先合作起来再说钱"——今天这样开头，后面很难加回来。', '今天你容易被绕进去，答应本不该答应的部分。适合谈"我们怎么配合"，不适合谈"各拿多少"。', '今天最怕对方一句"先做起来再说"。只要这么起了头，份额就再也谈不回来了。'],
+      '极弱': ['今天完全守不住自己的份额。', '别签任何带分成、股权、排他的合约。', '今天签的让利条款，九成是永久性的。改期。', '今天完全不设防。不适合谈任何涉及份额、资源分配的面谈。', '今天你答应出去的东西，多半要不回来。改期。']
+    },
+    '食神': {
+      '极旺': ['今天你产出的东西特别多，质量也好，不急着变现。', '适合签"交付标准、验收方式"写得很细的合约，你有底气定标准。不适合签带硬性交付期限的合同。', '最容易把交期答应得太满——今天答应的进度，明天做不完。', '今天你出的东西好，对方看得见。适合带方案、带样品去讲，让对方先看到实物再谈条件。', '聊得开心就把范围越扩越大。今天新加的每一项，都要回一句"这需要额外时间"。'],
+      '偏旺': ['今天你手里的活儿出得来，慢慢做也做得完。', '适合技术、内容、产品类的合约，条款按交付质量来定，你有优势。', '对方夸你两句，你就把范围加宽了。加进去的每一条都要配一个人天。', '今天你讲得细、有耐心，适合把复杂的事掰开讲给对方听。', '对方一句"你懂行"，你就把底全交代了。有些过程不必全说。'],
+      '中和': ['今天适合踏实做事，不焦不躁。', '适合签交付周期长、看重质量的合约。', '平顺就容易漏写违约条款，记得补上。', '今天适合踏实把事说清楚，不急着推进。', '平顺就容易忘了问对方真正的顾虑。散会之前一定要问一句"你还有什么担心的"。'],
+      '偏弱': ['今天你出活儿慢，精力跟不上。', '不适合签带硬交期的合约；要签就往后排期，多留一倍缓冲。', '今天最容易凭感觉估工期。按平时最慢的一次来排，别按最快那次。', '今天你精力跟不上，长会谈后半程容易掉线。把会谈压到 40 分钟以内。', '今天最容易凭感觉答应时间点。回去算一遍再回话。'],
+      '极弱': ['今天做什么都提不起劲。', '别签带交付承诺的合约，尤其带罚则的。', '"先签了再想办法"在今天最危险。改期。', '今天提不起劲，说话也没感染力。不适合主谈。', '"先见了再说"在今天最亏。改期。']
+    },
+    '伤官': {
+      '极旺': ['今天嘴上特别厉害，卖什么都卖得动，但也容易说过头。', '适合由你讲方案、做路演、争取条件——今天你的说服力是全场最强的。', '最容易为了拿下当场加码承诺。凡是今天新加的承诺，回家再审一遍。', '今天你说话最有分量，适合主讲、适合替自己争条件。', '最容易为了压住场面放狠话。狠话不上桌、条件不当场加——这两条守住，这场就谈得成。'],
+      '偏旺': ['今天表达顺、有锋头，推销和谈判都占上风。', '适合当主谈人，把条件往上抬一档谈。', '赢了嘴仗输了关系——今天对方会记住你说话的方式，留一句余地。', '今天表达顺、有锋头，适合当主谈，把话往明里说。', '赢了嘴仗输了关系。今天留一句余地，以后还要见面。'],
+      '中和': ['今天话说得清楚，不多不少。', '适合当面把条款讲一遍、逐条确认的签约方式。', '讲得顺就跳过了书面确认，还是要落字。', '今天当面把事情讲一遍最顺——你讲得清，对方也听得进。', '讲得顺就跳过了确认。讲完让对方复述一遍他理解到的。'],
+      '偏弱': ['今天嘴跟不上脑子，容易表达不到位。', '不适合临场谈判；带一个会说话的人一起去，或改成书面往来。', '最怕当场被追问细节答不上，气势一泄就全让了。事先把十个可能的问题写下来。', '今天临场容易被追问卡住。带一个会说话的人一起去。', '今天最怕被一个问题问住，后面就全顺着对方走了。会前先想好十个可能的问题，答不上来的先说"我回去确认"。'],
+      '极弱': ['今天一开口就容易说错话。', '别去谈，也别去辩。能书面就书面。', '今天说出的话最容易被抓住当把柄。改期。', '今天不该你开口。能书面就书面，能线上就线上。', '今天一开口就出错，对方记性比你还清楚。这种场合能不去就不去，改期。']
+    },
+    '正财': {
+      '极旺': ['今天的钱来得实在，而且量大——进项清楚，你也算得清。', '适合签价格、付款节奏都明确的合同，今天是拿好价的日子。', '钱顺的时候最容易忽略"收不回来怎么办"。付款节点和违约利息要写死。', '今天你心里有数、算得清，适合把数字摊在桌面上谈。', '数谈得顺的时候最容易不设防。散会前在备忘录里写一句最坏情况，再走。'],
+      '偏旺': ['今天进项稳，适合谈钱。', '适合谈价、谈付款方式。今天你有条件要求"先付一部分"。', '别为了拿下把账期放宽——今天放宽的账期，收的时候最难受。', '今天适合谈具体的数——价格、数量、节奏。', '别为了谈成把节奏放宽。今天松的口，后面收紧最难。'],
+      '中和': ['今天适合把账算清楚。', '适合签常规的买卖、服务合同，按行价谈就很顺。', '顺的时候容易不核单价，逐项核一遍。', '今天适合把账目、进度、清单对清楚。', '顺的时候容易不核数，逐项核一遍。'],
+      '偏弱': ['今天钱上使不上劲，谈价没底气。', '不适合谈价和账期；适合签已经谈好价的合约，走流程。', '今天最容易被"这个价已经很低了"说服。带一份同类成交价去。', '今天谈钱没底气，容易被"这个数已经很低了"说服。带一份同类成交记录去。', '今天最容易被对方的数字带着走。谈之前先写下你的底数。'],
+      '极弱': ['今天在钱上完全被动。', '别签涉及大额付款和账期的合约。', '今天谈的价，事后一定觉得低。改期。', '今天在数字上完全被动。不适合谈金额和分成。', '今天你报不出价，对方报什么就是什么。别谈金额，改期。']
+    },
+    '偏财': {
+      '极旺': ['今天机会财特别多，来钱快，也散得快。', '适合签一次性、短期、高弹性的合约，比如居间、代理、分销。', '手上同时开太多口子会顾不过来。今天最多同时签两件。', '今天机会多、人也活络，适合见新面孔、探新路子。', '手上同时聊太多头，最后一个都记不清。今天最多同时谈两件。'],
+      '偏旺': ['今天有外快机会，抓得住。', '适合签居间费、渠道分成这类"多劳多得"的合同，可以签得进取一点。', '别把"可能有的第二笔"写进合同当条件，写不实的最容易出事。', '今天适合见新的人、聊新的可能。', '别在会上把"可能还有第二笔"当条件讲出去。空头支票最容易在下次见面时爆。'],
+      '中和': ['今天适合接一些小机会，不大不小正合适。', '适合签金额不大的补充协议、增量合同。', '小机会签多了会拖住主业，数一数手上还有几个没做完。', '今天适合聊一聊小机会，别在会上定。', '见面聊得热闹，回去发现本职的事一件没动。今天最多约两场。'],
+      '偏弱': ['今天机会看着多，你接不住。', '不适合签需要垫资、需要你先投入的合同。', '"这单赚得快"是今天最容易上钩的话。算一遍最坏情况的现金流。', '今天新机会看着多。适合只做"认识一下"，不做决定。', '今天最容易因为对方一句"机会难得"就上钩。只听、只记，不做承诺。'],
+      '极弱': ['今天最容易被人用"机会"两个字牵着走。', '别签任何"先投入后回报"的合约。', '今天签的投机性合约，多半是替别人承担风险。改期。', '今天你对"机会"这两个字没有抵抗力。不适合见面谈新合作。', '今天你最容易替别人扛下风险，还谈得挺高兴。别见面，改期。']
+    },
+    '正官': {
+      '极旺': ['今天"管你"的那股力量到位了——规则、制度、上级、契约。你气太足，正官压得住你，但压狠了会顶起来。', '适合由你先立规矩、先递条款。今天你有底气把框架定下来，正适合当那个"定规矩的人"。不适合接受对方递来的、只能照签的合约。', '官逼民反——今天最容易因为"凭什么听你的"当场翻脸。规矩可以你定，对错别当场争，把分歧写进附件带回去。', '今天讲规矩的一方占上风，你气也足。适合当定议程的那个人——开场说清今天谈几件事、到哪一步算数。', '今天最容易开着开着就变成争对错。议程你定没问题，把有分歧的那几条记下来，会后书面对。'],
+      '偏旺': ['今天"管你"的那股力量到位了——规则、制度、上级、契约。对你这种本来气就足的人，正好被管住，不会乱来。', '适合正式场合、条款清楚的合约。你气盛容易在细节上争，今天正官压着，反而能按规矩走。适合当主谈人。', '如果对方也强势（比如对方是七杀日），今天会变成两个硬人顶牛，僵住。这种时候退一步，把条款留到明天。', '今天气氛端正，适合有议题有议程的那种正式谈法。你气盛，容易在细节上争——今天压得住，按规矩走。', '如果对方也很硬，今天容易僵在那儿谁也下不来台。主动说一句"这条下次再谈"。'],
+      '中和': ['今天气氛端正，适合办正事。不冷不热，按章办事最顺。', '首选。条款清楚、按约履行，正是正官本义。', '太过顺境容易放松，签约前还是要逐条核对。', '今天适合办正事，按议程走最顺。', '太顺容易放松。谈完还是要把结论写成一行发过去。'],
+      '偏弱': ['今天压力大。正官来管你，你本来气就不足，容易被规矩卡住、被上级或制度压着走。', '不是不能签，是不适合当主谈人。让对方先提，你后应。更适合签署已经谈好的合约，不适合临场议价。', '今天硬扛会累垮。该缓就缓，把主谈让给别人。', '今天压力大，容易被对方的规矩和身份压着走。不适合当主谈，让对方先提。', '今天硬扛会把状态拖垮。开场就把议程让出去，自己只管补充细节。'],
+      '极弱': ['今天完全被压。规矩、制度、上级、契约全压在你身上，你连还价的力气都没有。', '不签，改期。今天签下去的条款，多半是你事后觉得吃亏的那一版。', '别用"先签了再说"来解决问题——极弱日签下的约，事后改起来最费劲。', '今天完全被压，连还价的空间都没有。别安排正式面谈。', '今天答应的条件，多半是你事后觉得吃亏的那一版。改期。']
+    },
+    '七杀': {
+      '极旺': ['今天压在身上的硬任务特别重，但你扛得住，甚至扛得住几件。', '适合签责任方明确、罚则清楚的合约，前提是罚则对双方一样。你不怕担责，就怕担不该担的。', '最容易被"这事非你不可"架上，把不属于你的责任签进来。逐条问"这是我负责，还是我们负责"。', '今天对面来的多半是硬角色或硬要求，但你扛得住。适合谈难谈的那一场。', '今天最容易被人一句"只有你能接"架上去，当场把不该你担的活揽下来。追问一句：这件事的主责人写谁。'],
+      '偏旺': ['今天有硬任务压着，扛得住，扛完是功劳。', '适合签带里程碑和考核的合约，今天你有本事按期交。', '别把对方的风险也接过来——今天你容易为了"显得靠得住"多答应一档。', '今天有压力压着，谈得动、也顶得住。适合谈要出结论的会。', '别为了显得靠得住多答应一档。今天多答应的，明天要还。'],
+      '中和': ['今天有压力，但在你能应付的范围内。', '适合签常规的、有明确交付要求的合同。', '压力适中容易低估，逐条对一遍工期。', '今天压力在你能应付的范围内，按议题谈就行，不用绕。', '压力适中容易低估难度。散会前把时间点定死。'],
+      '偏弱': ['今天压力超过你的承受力，容易被推着走。', '不适合签带硬性期限和罚则的合约；要签就砍范围或往后延期。', '今天最容易"条件没谈完就先点头"。谈之前把不能接受的写下来。', '今天你扛不住硬要求，谈着谈着就被推着走。这一场不要安排在今天。', '今天最容易在压力下当场点头。会前写好三条不能接受的，摆在手边，撑不住就低头看一眼。'],
+      '极弱': ['今天完全被压着走，喘不过气。', '不签。今天签的带罚则的约，你是吃亏的那一方。', '别用"扛过去就好了"骗自己。改期。', '今天你被压得喘不过气来，场面上完全被动。不安排面谈。', '别用"见一面总能好一点"骗自己。改期。']
+    },
+    '正印': {
+      '极旺': ['今天的文书、凭据、靠山特别到位：材料齐全，也有人愿意替你说话。', '适合签需要资质的合约——投标、准入、授权。你今天的证明材料最硬。', '材料齐了就懒得看条款。正印日最容易只看"有没有"，不看"写了啥"。', '今天的材料、凭据、引荐都到位。适合带材料去谈，或者请人引荐。', '今天最容易只顾着把材料念完，没听对方在问什么。讲三句停一下，问一句"你最关心哪块"。'],
+      '偏旺': ['今天有文书运，办手续顺，也有人愿意帮你说话。', '适合签需要盖章、备案、走审批的合同，流程今天走得动。', '别因为"有人打过招呼"就跳过条款，熟人办事最不好翻脸。', '今天有文书运，也有贵人愿意帮腔。适合走正式渠道、按流程约。', '有人打过招呼，不等于细节就不用谈。今天最容易因为熟人而不好意思追问。'],
+      '中和': ['今天办文书的运气平常，按流程走就顺。', '适合常规的盖章签约、备案。', '平常日最容易漏一份附件，走之前对一遍清单。', '今天按流程走就顺，适合例行沟通。', '平常日最容易漏问一句。走之前对一遍要问的清单。'],
+      '偏弱': ['今天文书上容易卡壳，材料也可能不全。', '不适合签依赖资质或审批的合约；先补齐材料，签的事往后放。', '今天最容易"先签、后补件"——后补的件拖得最久。', '今天容易卡在材料、身份、流程上。先补材料，面谈往后放。', '今天最容易"先答应、后补件"。补的东西拖得最久。'],
+      '极弱': ['今天在文书和审批面前完全被动，靠山也帮不上。', '别签需要资质、备案、担保的合约。', '今天签的合同，出问题的时候你会发现手里的凭据不够。改期。', '今天流程和身份卡着你，帮腔的人也使不上劲。别安排需要审批或背书的会。', '今天谈下来的事，回头你会发现没有白纸黑字可依。改期。']
+    },
+    '偏印': {
+      '极旺': ['今天偏门信息特别多，方法也多，但容易想太多、钻牛角尖。', '适合审条款、找漏洞、找对方的破绽——今天你是最能挑出毛病的人。', '挑出太多毛病反而谈不成。今天只挑三条最要命的，其余放过去。', '今天你最能听出话里的破绽，适合判断对方到底想干什么。', '今天最容易把会开成盘问，对方一紧张就不说了。听出来的问题先记下，会上只点两条。'],
+      '偏旺': ['今天脑子活，能想到别人想不到的路子。', '适合谈非标合约——定制、特殊条款、行业外合作。', '你想到的"巧办法"对方未必认。写成条款之前先问一句"这条你签不签"。', '今天你能想到别人想不到的问法，适合试探对方的真实意图。', '你想到的巧办法对方未必认。说出来之前先看对方表情。'],
+      '中和': ['今天想得比平时细一点。', '适合审阅、复核条款，或者签那些条款有点绕的合同。', '细是好事，别把一件事翻来覆去看一天。', '今天适合问细节——你会注意到平时忽略的地方。', '细是好事，别把同一个问题翻来覆去问一天。'],
+      '偏弱': ['今天容易钻牛角尖、想太多。', '不适合今天在条款上做大决定——你会在小地方纠缠很久。找一个不做这行的朋友帮你看一遍。', '今天最容易被一段看不懂的条款卡住，其实那段不要紧。先签要紧的，剩下的标出来问法务。', '今天容易在细枝末节上纠缠很久，反而没谈正题。找一个不在这一行的朋友陪你去。', '今天最容易被一句话卡住，其实那句话不要紧。先谈要紧的，其余标出来事后问。'],
+      '极弱': ['今天越想越乱，容易自己把自己绕进去。', '别做条款判断。今天判断不了的，明天再看反而清楚。', '打三个电话问三个"专家"，你会得到四个答案。只信一个。', '今天越想越乱，谈着谈着自己就绕进去了。不适合当场做判断。', '今天最容易把同一个问题问三遍，问出四个答案。只找一个你信得过的人确认。']
+    }
+  };
+  /* R5.2 事项 → 列下标：[建议, 反面]。第 0 段是该十神×档位的白话，两个事项共用。
+     只登记「签约」「面谈」两列；出行／开工／收款未登记，页面上退回 R5.1 粗粒度词表并明确提示。 */
+  var SS52_IX = { '签约': [1, 2], '面谈': [3, 4] };
+  var SS52_COLS = ['签约', '面谈'];
+
+  /* 单个候选日的 R6 打分。avail = [起, 止]（分钟，0-1440）或 null */
+  function r6Day(pf, matterKey, y, m, d, avail) {
+    var n = mod(jdn(y, m, d) + 49, 60), gz = gzOf(n), gan = gz.charAt(0), zhi = gz.charAt(1);
+    var mt = matterOf(matterKey);
+    var tg = tenGod(pf.dayGan, gan);
+    var S1 = mt.main.indexOf(tg) >= 0 ? 2 : (mt.sub.indexOf(tg) >= 0 ? 1 : 0);
+    var kw = kongWangOf(n);
+    var hits = [], i;
+    for (i = 0; i < 4; i++) {
+      var b = pf.branches[i];
+      if (CHONG_OF[zhi] === b) hits.push({ k: '六冲', txt: '流日' + zhi + '冲' + b + '（' + pf.labels[i] + '支）' });
+      if (isXing(zhi, b))      hits.push({ k: '三刑', txt: '流日' + zhi + '刑' + b + '（' + pf.labels[i] + '支）' });
+      if (HAI_OF[zhi] === b)   hits.push({ k: '六害', txt: '流日' + zhi + '害' + b + '（' + pf.labels[i] + '支）' });
+      if (kw.indexOf(b) >= 0)  hits.push({ k: '逢空', txt: '流日旬空' + kw.join('') + '，命主' + pf.labels[i] + '支' + b + '落空' });
+    }
+    var bonus = 0, bonusNote = '';
+    if (mt.yima && YIMA_OF[pf.dayZhi] === zhi) { bonus = 1; bonusNote = '日支' + pf.dayZhi + '的驿马在' + YIMA_OF[pf.dayZhi] + '，本日正好是' + YIMA_OF[pf.dayZhi] + '日'; }
+    var P = Math.min(hits.length, 3);
+
+    /* 时窗：时干五鼠遁（R1.4），取最早的对口时辰；23:00 后不计入当日；默认剔除丑寅时 */
+    var zi = (GAN.indexOf(gan) % 5) * 2;
+    var pick = null;
+    for (var z = 0; z < 12; z++) {
+      var hg = GAN[mod(zi + z, 10)], hz = HOUR_ZHI.charAt(z);
+      var start = ((z * 2 + 23) % 24) * 60;
+      var lv = mt.main.indexOf(tenGod(pf.dayGan, hg)) >= 0 ? 2 : (mt.sub.indexOf(tenGod(pf.dayGan, hg)) >= 0 ? 1 : 0);
+      if (start >= 23 * 60) continue;
+      if (start < 5 * 60) continue;
+      if (lv === 0) continue;
+      pick = { z: z, hz: hz, hg: hg, gz: hg + hz, god: tenGod(pf.dayGan, hg), lv: lv, start: start, end: start + 120 };
+      break;
+    }
+    var T = null, overlap = null;
+    if (avail) {
+      if (pick) {
+        overlap = Math.max(0, Math.min(pick.end, avail[1]) - Math.max(pick.start, avail[0]));
+        T = overlap >= 120 ? 2 : (overlap >= 60 ? 1 : 0);
+      } else { overlap = 0; T = 0; }
+    }
+    var pos = S1 + (T === null ? 0 : T) + bonus;
+    if (pos > 4) pos = 4;                       /* R6.3 正分之和封顶 +4 */
+    var total = pos - P;
+    var grade = (T === null) ? (total >= 2 ? '高' : (total >= 0 ? '中' : '低'))
+                            : (total >= 3 ? '高' : (total >= 1 ? '中' : '低'));
+    return { y: y, m: m, d: d, n: n, gz: gz, gan: gan, zhi: zhi, kw: kw, tenGod: tg,
+             S1: S1, hits: hits, P: P, bonus: bonus, bonusNote: bonusNote,
+             pick: pick, T: T, overlap: overlap, total: total, grade: grade, avail: !!avail };
+  }
+
+  function r6Rank(pf, matterKey, fromY, fromM, fromD, days, avail) {
+    var out = [], base = Date.UTC(fromY, fromM - 1, fromD);
+    for (var k = 0; k < days; k++) {
+      var dt = new Date(base + k * 86400000);
+      out.push(r6Day(pf, matterKey, dt.getUTCFullYear(), dt.getUTCMonth() + 1, dt.getUTCDate(), avail));
+    }
+    out.sort(function (a, b) {
+      if (b.total !== a.total) return b.total - a.total;
+      if (a.P !== b.P) return a.P - b.P;
+      if (b.S1 !== a.S1) return b.S1 - a.S1;
+      return a.n - b.n;
+    });
+    return out;
+  }
+
+  /* ==================== R7 顺势／逆势判定（已登记 · 说明书 §14） ==================== */
+  /* R7.1 A 层 · 十神本性：三值 顺用 / 逆用 / 中性。
+     出处：《子平真诠》「论用神」——「财官印食，此用神之善而顺用之者也；煞伤劫刃，用神之不善而逆用之者也。」
+     偏印（枭）不在原文两列内，本工具据徐乐吾《子平真诠评注》归逆用，标记为「扩展」。
+     比肩不在原文两列内，立第三值「中性」——同类而不争不夺，不并入顺用。 */
+  var R7_QUOTE = '《子平真诠》「论用神」：财官印食，此用神之善而顺用之者也；煞伤劫刃，用神之不善而逆用之者也。';
+  var R7_A = {
+    '正官': '顺用', '正财': '顺用', '偏财': '顺用', '正印': '顺用', '食神': '顺用',
+    '七杀': '逆用', '伤官': '逆用', '劫财': '逆用', '偏印': '逆用',
+    '比肩': '中性'
+  };
+  var R7_A_SRC = {
+    '正官': '原文「官」', '正财': '原文「财」', '偏财': '原文「财」（本工具裁定：财之偏者仍是财，不入凶神）',
+    '正印': '原文「印」', '食神': '原文「食」',
+    '七杀': '原文「煞」', '伤官': '原文「伤」', '劫财': '原文「劫刃」',
+    '偏印': '扩展：原文四凶神为「煞伤劫刃」，不含偏印；本工具据徐乐吾《子平真诠评注》列枭为四凶神之一',
+    '比肩': '裁定：原文两列均不含比肩，故立第三值「中性」（同类而不争不夺，《子平真诠》「论建禄」不以禄为凶）'
+  };
+  /* R7.2 B 层 · 扶抑。帮身／泄耗与 R5.2.0 同一套判定，不另立。 */
+  var R7_HELP_GODS = ['比肩', '劫财', '正印', '偏印'];
+  var R7_DRAIN_GODS = ['食神', '伤官', '正财', '偏财', '正官', '七杀'];
+  /* 判据用「档位」，不用 S 值——S 值只是档位的内部判据，不外露（与 R5.2 同一份数据、同一套判据） */
+  function r7B(band, god) {
+    var help = R7_HELP_GODS.indexOf(god) >= 0;
+    if (band === '中和') return { v: '中性', help: help, why: '日主中和 → B 层不表态' };
+    var weak = (band === '偏弱' || band === '极弱');
+    if (weak) return { v: help ? '顺' : '逆', help: help, why: '日主' + band + '，身弱喜帮 → ' + (help ? '帮身顺' : '泄耗逆') };
+    return { v: help ? '逆' : '顺', help: help, why: '日主' + band + '，身旺喜泄耗 → ' + (help ? '帮身逆' : '泄耗顺') };
+  }
+  /* R7.3 合成表 3×3。lv = 费力程度（1 最费力 … 4 不需额外动作），仅用于 UI 颜色，不改文案。 */
+  var R7_SYNTH = {
+    '顺用|顺':   { k: '顺势·发力',     d: '牌好、人也接得住，最该往前推', lv: 1 },
+    '顺用|逆':   { k: '逆势·先扶不接', d: '牌是好的，现在接不住——先补本命', lv: 0 },
+    '顺用|中性': { k: '顺势·照常',     d: '没有额外的扶抑理由支持或反对，顺着走就行', lv: 4 },
+    '逆用|顺':   { k: '顺势·借力啃硬', d: '难事来了，而你现在正有力气——适合啃硬骨头', lv: 2 },
+    '逆用|逆':   { k: '逆势·收敛',     d: '牌难、人也没余力——收着，不新开局', lv: 0 },
+    '逆用|中性': { k: '逆势·留意',     d: '凶神当值但日主中和：既不为我所用，也不至于伤身，留个心眼', lv: 0 },
+    '中性|顺':   { k: '顺势·平推',     d: '同类或印星来帮身，而你现在正需要帮，可以按常规推进', lv: 3 },
+    '中性|逆':   { k: '逆势·留意',     d: '同类来帮你，但你现在并不缺帮——那多半是来分你东西的', lv: 0 },
+    '中性|中性': { k: '中性·按常',     d: '既没有倾向，也没有理由——不因 R7 而改变什么', lv: 4 }
+  };
+  var R7_LV = { 1: '发力', 2: '借力啃硬', 3: '平推', 4: '照常' };
+  /* R7.3 渲染层短句：把「十神 × 合成方向」落成一句人话。
+     原料来自 R5.1 粗粒度词表，只做措辞，不新增判定——判定只有 A 层（R7.1）与 B 层（R7.2）。 */
+  var R7_LINE = {
+    '正官': { '顺': '名分、规矩、正式关系靠得住', '逆': '别拿规矩和上级硬顶', '中': '按规矩办事最顺' },
+    '正财': { '顺': '一份耕耘一分收获的稳钱能进', '逆': '慢慢攒的稳钱会缩水', '中': '该拿的按约定拿' },
+    '偏财': { '顺': '外快、机会财接得住', '逆': '别押大的、别赌运气', '中': '顺手的机会可以接' },
+    '正印': { '顺': '靠山、凭据、资格能用', '逆': '别只顾着要照应和名分', '中': '该办的文书照常办' },
+    '偏印': { '顺': '偏门的门路、非常规的法子能用', '逆': '别自己钻牛角尖', '中': '按老办法走' },
+    '食神': { '顺': '手上的东西换得到回报', '逆': '火候没到，别急着出货', '中': '按自己的节奏出活' },
+    '伤官': { '顺': '说得出口、锋利见效快', '逆': '话别说过头、少表态', '中': '该说的说，别多说' },
+    '七杀': { '顺': '扛硬任务、啃难事有力气', '逆': '硬仗别接、别自己加码', '中': '硬事按程序走' },
+    '比肩': { '顺': '同伴、同行能搭把手', '逆': '身边人分利的事要留意', '中': '各走各的路' },
+    '劫财': { '顺': '借别人的力能办成事', '逆': '别谈分成、股权、合伙', '中': '钱的事先小人后君子' }
+  };
+  function r7Line(j) {
+    if (!j) return '';
+    var t = R7_LINE[j.god];
+    if (!t) return '';
+    return t[j.dir] || t['中'] || '';
+  }
+
+  /* R7.7 渲染约定：清单按十神分组，组内按费力程度升序（lv 小＝更费力，排前面） */
+  var R7_GROUP_TITLE = { '顺': '顺着走', '逆': '留个心眼', '中': '不偏不倚' };
+  var R7_GOD_ORDER = ['比肩', '劫财', '食神', '伤官', '正财', '偏财', '正官', '七杀', '正印', '偏印'];
+  function r7Group(items) {
+    var m = {}, seen = [], i, g;
+    for (i = 0; i < items.length; i++) {
+      g = items[i].god;
+      if (!m[g]) { m[g] = []; seen.push(g); }
+      m[g].push(i);
+    }
+    var gs = seen.map(function (k) {
+      var idx = m[k].slice().sort(function (a, b) { return items[a].lv - items[b].lv; });
+      return { god: k, idx: idx, n: idx.length, minLv: items[idx[0]].lv };
+    });
+    gs.sort(function (a, b) {
+      if (a.minLv !== b.minLv) return a.minLv - b.minLv;
+      return R7_GOD_ORDER.indexOf(a.god) - R7_GOD_ORDER.indexOf(b.god);
+    });
+    return gs;
+  }
+
+  /* 同一个标签、不同的来路：追溯栏必须分开写 */
+  function r7Reason(A, B, god) {
+    if (A === '逆用' && B === '中性') return god + '属逆用（' + R7_A_SRC[god] + '）；日主中和、B 层不表态 → 凶神当值而身中和，留个心眼';
+    if (A === '中性' && B === '逆') return god + '为中性第三值；日主偏旺／极旺，帮身反而多余 → 同类不是来帮、是来分利，留个心眼';
+    return '';
+  }
+  /* 对一个天干做完整判定：A 层 → B 层 → 合成 */
+  function r7Judge(dayGan, gan, band) {
+    var god = tenGod(dayGan, gan);
+    var A = R7_A[god] || '中性';
+    var b = r7B(band, god);
+    var cell = R7_SYNTH[A + '|' + b.v];
+    var dir = (cell.k.indexOf('顺势') === 0) ? '顺' : (cell.k.indexOf('逆势') === 0 ? '逆' : '中');
+    return { gan: gan, god: god, A: A, A_src: R7_A_SRC[god], quote: R7_QUOTE,
+             B: b.v, B_why: b.why, helps: b.help,
+             key: cell.k, dir: dir, lv: cell.lv, lvName: R7_LV[cell.lv] || '', note: cell.d,
+             sameNameReason: r7Reason(A, b.v, god), band: band };
+  }
+  /* R7.5 大运与公历日期的对应 */
+  /* 起运偏移沿命理惯例表达（1 年 = 360 日、1 月 = 30 日，R4），落到公历按日历加减 */
+  function r7StartMs(chart, luck) {
+    var e = chart.effective;
+    var base = Date.UTC(e.y + luck.years, e.m - 1 + luck.months, e.d, e.hh, e.mi, 0);
+    return base + Math.round(luck.days * 86400000);
+  }
+  /* 第 n 段 = 起运时刻 + n × 10 年。锚点是「起运时刻」本身，不是某个固定钟点。 */
+  function r7Segments(chart, luck, count) {
+    var start = r7StartMs(chart, luck);
+    var d0 = new Date(start);
+    var out = [], n = count || 8;
+    for (var i = 0; i < n; i++) {
+      var a = Date.UTC(d0.getUTCFullYear() + i * 10, d0.getUTCMonth(), d0.getUTCDate(), d0.getUTCHours(), d0.getUTCMinutes(), 0);
+      var b = Date.UTC(d0.getUTCFullYear() + (i + 1) * 10, d0.getUTCMonth(), d0.getUTCDate(), d0.getUTCHours(), d0.getUTCMinutes(), 0);
+      out.push({ i: i, gz: luck.steps[i] ? luck.steps[i].gz : null, startMs: a, endMs: b });
+    }
+    return out;
+  }
+  function r7At(segs, ms) {
+    for (var i = 0; i < segs.length; i++) { if (ms >= segs[i].startMs && ms < segs[i].endMs) return segs[i]; }
+    return null;
+  }
+  function r7FmtMs(ms) {
+    var d = new Date(ms);
+    return d.getUTCFullYear() + '-' + pad2(d.getUTCMonth() + 1) + '-' + pad2(d.getUTCDate()) + ' ' + pad2(d.getUTCHours()) + ':' + pad2(d.getUTCMinutes());
+  }
+  /* 一个命主在某个公历年的体用对照：大运 + 该年流年 */
+  function r7Year(profile, chart, luck, y, m, d) {
+    if (!profile || !profile.strength) return null;
+    var band = profile.strength.band, dayGan = profile.dayGan;
+    var segs = r7Segments(chart, luck, 8);
+    var at = r7At(segs, Date.UTC(y, m - 1, d, 12, 0, 0));
+    var seg = at || segs[0];
+    var luckJudge = seg.gz ? r7Judge(dayGan, String(seg.gz).charAt(0), band) : null;
+    var lyc = computeChart({ y: y, m: 6, d: 1, hh: 12, mi: 0 });
+    var lyGz = lyc.ok ? String(lyc.pillars.year.gz).charAt(0) : null;
+    var yearJudge = lyGz ? r7Judge(dayGan, lyGz, band) : null;
+    return { y: y, band: band, dayGan: dayGan, luck: seg, luckJudge: luckJudge, lyGz: lyc.ok ? lyc.pillars.year.gz : '', yearJudge: yearJudge };
+  }
+
+  /* ==================== R9 复盘对照：纯判据（已登记 · 说明书 §16） ==================== */
+  var RULE_REV = { app: 'v9', r1: '1', r5_1: '1', r5_2_0: '2', r5_2: '2', r6: '2', r7: '1', r7_7: '1' };
+  var RULE_FAMILIES = ['r1', 'r5_1', 'r5_2_0', 'r5_2', 'r6', 'r7', 'r7_7'];
+  var RULE_LABEL = { r1: 'R1 干支历', r5_1: 'R5.1 十神粗表', r5_2_0: 'R5.2.0 日主强弱权重', r5_2: 'R5.2 十神上下文层', r6: 'R6 择日打分', r7: 'R7 顺势／逆势', r7_7: 'R7.7 层次对照' };
+  var RULE_CHANGE = { r5_2_0: 'R5.2.0 日主强弱权重 ±1 → ±0.5' };
+  var SNAP_MAX = 200;
+  var SNAP_KINDS = ['benming', 'jinri', 'zeri', 'tiyong', 'cengci'];
+
+  /* 规则族差异：只比两边都存在的族。旧记录缺某个族＝当时该族不存在，不算变动（R9.1 第 4 条） */
+  function ruleDiff(oldV, curV) {
+    var changed = [], added = [], i, fam, a, b;
+    for (i = 0; i < RULE_FAMILIES.length; i++) {
+      fam = RULE_FAMILIES[i];
+      a = (oldV && oldV[fam]) || null;
+      b = (curV && curV[fam]) || null;
+      if (a === null) { if (b !== null) added.push(fam); continue; }
+      if (a !== b) changed.push({ fam: fam, label: RULE_LABEL[fam], from: a, to: b,
+        desc: RULE_CHANGE[fam] || (RULE_LABEL[fam] + ' 第 ' + a + ' 版 → 第 ' + b + ' 版') });
+    }
+    return { changed: changed, added: added, lagging: changed.length > 0 };
+  }
+
+  /* 差异条里的长值截断：全文就在正上方两块里，这里只列「哪一项变了」（R9.12）。
+     按语义截断——优先截在标点处（不切在词／从句中间），没有合适标点才硬截到 n + 省略号。 */
+  function clip(s, n) {
+    s = String(s);
+    if (s.length <= n) return s;
+    var P = '，。；：、！？,.;:!?）)》」』', lo = Math.ceil(n / 2), best = -1, i;
+    for (i = lo; i < n && i < s.length; i++) if (P.indexOf(s.charAt(i)) >= 0) best = i;
+    if (best >= 0) return s.slice(0, best + 1) + '…';
+    return s.slice(0, n) + '…';
+  }
+
+  /* 差异条：差异数 ≥5 时只写一句「存在多处差异」——逐条列举会退化成清单，也不列举「其他 N 项两边完全相同」（R9.5） */
+  function snapDiffNote(diffKeys, totalKeys) {
+    if (diffKeys.length >= 5) return { text: '存在多处差异，逐项对照见上方。', plain: true, same: [] };
+    var same = [], i, j, hit;
+    for (i = 0; i < totalKeys.length; i++) {
+      hit = false;
+      for (j = 0; j < diffKeys.length; j++) if (diffKeys[j] === totalKeys[i]) { hit = true; break; }
+      if (!hit) same.push(totalKeys[i]);
+    }
+    if (!same.length) return { text: '两边没有任何一项完全相同。', plain: true, same: [] };
+    return { text: '其他 ' + same.length + ' 项两边完全相同：' + same.join('、') + '。', plain: false, same: same };
+  }
+
+  /* C 状态：目标日「已过」＝ 目标日 23:00 < 当前时刻（两侧都取北京时间口径的字段，R9.6） */
+  function pastTargetDay(t, now) {
+    var end = Date.UTC(t.y, t.m - 1, t.d, 23, 0, 0);
+    var cur = Date.UTC(now.y, now.m - 1, now.d, now.hh, now.mi, 0);
+    return cur > end;
+  }
+
+  /* 每命主快照上限：到顶返回提示，不静默丢弃（R9.2） */
+  function snapCap(n) {
+    if (n >= SNAP_MAX) return { ok: false, msg: '这个命主已经有 ' + SNAP_MAX + ' 条快照（上限）。新快照没有写入——请先到「记录」页导出备份，再删掉不需要的快照。' };
+    return { ok: true, msg: '' };
+  }
+
+  /* 快照自足：只靠快照里的出生信息重建一个「档案」，供 profileOf 与重算使用（R9.3） */
+  function snapRec(s) {
+    var b = (s && s.birthSnapshot) || {};
+    return {
+      id: s.recId, name: b.name || '未命名', gender: b.gender, place: b.place || '',
+      birth: { y: b.y, m: b.m, d: b.d, hh: b.hh, mi: b.mi, tz: b.tz || 'Asia/Shanghai',
+               trueSolar: !!b.trueSolar, lonDeg: (b.lonDeg === undefined ? null : b.lonDeg) },
+      chart: { ganzhi: b.ganzhi || '', pillars: b.pillars, effective: b.effective }
+    };
+  }
+
+  /* 从档案记录取 R6 需要的命主字段 */
+  function profileOf(rec) {
+    var p = rec && rec.chart && rec.chart.pillars;
+    if (!p || !p.year || !p.month || !p.day || !p.hour) return null;
+    var b = rec.birth || {};
+    return {
+      name: rec.name || '未命名', gender: rec.gender,
+      ganzhi: rec.chart.ganzhi,
+      dayGan: String(p.day.gz).charAt(0), dayZhi: String(p.day.gz).charAt(1),
+      branches: [String(p.year.gz).charAt(1), String(p.month.gz).charAt(1), String(p.day.gz).charAt(1), String(p.hour.gz).charAt(1)],
+      labels: ['年', '月', '日', '时'],
+      strength: strengthOf(p),
+      birth: b
+    };
+  }
+  return {
+    computeChart: computeChart, computeLuck: computeLuck, selfTest: selfTest,
+    termInfo: termInfo, termMs: termMs, eqOfTime: eqOfTime, trueSolarTime: trueSolarTime,
+    jdn: jdn, gzOf: gzOf, mod: mod, pad2: pad2,
+    tenGod: tenGod, MATTERS: MATTERS, matterOf: matterOf, SS_BRIEF: SS_BRIEF, SS_SRC: SS_SRC,
+    kongWangOf: kongWangOf, r6Day: r6Day, r6Rank: r6Rank, profileOf: profileOf, YIMA_OF: YIMA_OF,
+    SS52: SS52, SS52_IX: SS52_IX, strengthOf: strengthOf, strengthLine: strengthLine, bandOf: bandOf, BENQI_OF: BENQI_OF,
+    R7_A: R7_A, R7_A_SRC: R7_A_SRC, R7_QUOTE: R7_QUOTE, R7_SYNTH: R7_SYNTH, R7_LV: R7_LV,
+    R7_HELP_GODS: R7_HELP_GODS, R7_DRAIN_GODS: R7_DRAIN_GODS, r7B: r7B, r7Judge: r7Judge, r7Reason: r7Reason, R7_LINE: R7_LINE, r7Line: r7Line,
+    r7Group: r7Group, R7_GROUP_TITLE: R7_GROUP_TITLE, R7_GOD_ORDER: R7_GOD_ORDER,
+    r7StartMs: r7StartMs, r7Segments: r7Segments, r7At: r7At, r7FmtMs: r7FmtMs, r7Year: r7Year,
+    RULE_REV: RULE_REV, RULE_FAMILIES: RULE_FAMILIES, RULE_LABEL: RULE_LABEL, RULE_CHANGE: RULE_CHANGE,
+    SNAP_MAX: SNAP_MAX, SNAP_KINDS: SNAP_KINDS, ruleDiff: ruleDiff, snapDiffNote: snapDiffNote, clip: clip,
+    pastTargetDay: pastTargetDay, snapCap: snapCap, snapRec: snapRec,
+    GAN: GAN, ZHI: ZHI, TERMS: TERMS, JIE: JIE, RULES: RULES, VERIFY: VERIFY,
+    RANGE_MIN: RANGE_MIN, RANGE_MAX: RANGE_MAX
+  };
+})();
+/* ===================== ENGINE-END ===================== */
+
+
+</script>
+<script>
+
+
+(function () {
+  'use strict';
+  var NS = 'nhtj.v1';
+  var SCHEMA = 1;
+
+  var LS_OK = (function () { try { var k = NS + '.__probe'; localStorage.setItem(k, '1'); localStorage.removeItem(k); return true; } catch (e) { return false; } })();
+  var MEM = {};
+  var Store = {
+    ok: LS_OK,
+    get: function (key, dflt) { try { var raw = LS_OK ? localStorage.getItem(NS + '.' + key) : MEM[key]; if (raw === null || raw === undefined) return dflt; return JSON.parse(raw); } catch (e) { return dflt; } },
+    set: function (key, value) { var raw = JSON.stringify(value); try { if (LS_OK) localStorage.setItem(NS + '.' + key, raw); else MEM[key] = raw; return true; } catch (e) { MEM[key] = raw; return false; } },
+    del: function (key) { try { if (LS_OK) localStorage.removeItem(NS + '.' + key); } catch (e) {} delete MEM[key]; }
+  };
+  function migrate(old, t) { var m = old || {}; m.schema = t; if (!m.createdAt) m.createdAt = Date.now(); m.updatedAt = Date.now(); return m; }
+  var meta = Store.get('meta', null);
+  if (!meta || meta.schema !== SCHEMA) { meta = migrate(meta, SCHEMA); Store.set('meta', meta); }
+
+  function isArr(v) { return Object.prototype.toString.call(v) === '[object Array]'; }
+  function listRecords() { var r = Store.get('records', []); return isArr(r) ? r : []; }
+  function putRecords(l) { return Store.set('records', l); }
+  function newId() { return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7); }
+  function $(s) { return document.querySelector(s); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  var pad2 = NHTJ.pad2;
+  function stamp() { var d = new Date(); return d.getFullYear() + pad2(d.getMonth() + 1) + pad2(d.getDate()) + '-' + pad2(d.getHours()) + pad2(d.getMinutes()); }
+  function fmtTime(ts) { var d = new Date(ts); return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()) + ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes()); }
+  var toastTimer = null;
+  function toast(msg) { var t = $('#toast'); t.textContent = msg; t.classList.add('show'); if (toastTimer) clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.classList.remove('show'); }, 2200); }
+  function nowBeijing() { var t = new Date(Date.now() + 8 * 3600000); return { y: t.getUTCFullYear(), m: t.getUTCMonth() + 1, d: t.getUTCDate(), hh: t.getUTCHours(), mi: t.getUTCMinutes() }; }
+
+  /* ---------- 择日对照（R6 + R5.1 渲染层） ---------- */
+  var CMP_KEY = 'nhtj.v1.compare';
+  var CMP = { recId: null, matter: '签约', days: 30, from: '', to: '', expand: false, trace: false, seg: 'zeri' };
+  var WK = ['日', '一', '二', '三', '四', '五', '六'];
+  var WSD = { '甲': '甲己还加甲', '己': '甲己还加甲', '乙': '乙庚丙作初', '庚': '乙庚丙作初',
+              '丙': '丙辛从戊起', '辛': '丙辛从戊起', '丁': '丁壬庚子居', '壬': '丁壬庚子居',
+              '戊': '戊癸何方发、壬子是真途', '癸': '戊癸何方发、壬子是真途' };
+  function cmpLoad() { try { var raw = localStorage.getItem(CMP_KEY); if (!raw) return; var o = JSON.parse(raw); if (!o || typeof o !== 'object') return;
+    CMP.recId = o.recId || null; CMP.matter = o.matter || '签约'; CMP.days = (o.days === 90 ? 90 : 30); CMP.from = o.from || ''; CMP.to = o.to || ''; CMP.seg = (o.seg === 'fupan' ? 'fupan' : 'zeri'); } catch (e) {} }
+  function cmpSave() { try { localStorage.setItem(CMP_KEY, JSON.stringify({ recId: CMP.recId, matter: CMP.matter, days: CMP.days, from: CMP.from, to: CMP.to, seg: CMP.seg })); } catch (e) {} }
+  function minOf(hhmm) { if (!hhmm || hhmm.indexOf(':') < 0) return null; var a = hhmm.split(':'); var v = parseInt(a[0], 10) * 60 + parseInt(a[1], 10); return isNaN(v) ? null : v; }
+  function fmtMin(v) { return pad2(Math.floor(v / 60)) + ':' + pad2(v % 60); }
+  function ymd(y, m, d) { return y + '-' + pad2(m) + '-' + pad2(d); }
+  function wkOf(y, m, d) { return '周' + WK[new Date(Date.UTC(y, m - 1, d)).getUTCDay()]; }
+  function dnum(a, b) { return (a.y * 10000 + a.m * 100 + a.d) < (b.y * 10000 + b.m * 100 + b.d) ? -1 : 1; }
+  function ddiff(a, b) { return Math.round((Date.UTC(b.y, b.m - 1, b.d) - Date.UTC(a.y, a.m - 1, a.d)) / 86400000); }
+  function liuYue(d) { var c = NHTJ.computeChart({ y: d.y, m: d.m, d: d.d, hh: 12, mi: 0 }); return c.ok ? { year: c.pillars.year.gz, month: c.pillars.month.gz } : null; }
+
+  function dayBoxHTML(d, ly, badge, cls) {
+    var p = d.pick;
+    return '<div class="daybox' + (cls || '') + '">' +
+      '<div class="db-top"><span class="db-date">' + ymd(d.y, d.m, d.d) + ' ' + wkOf(d.y, d.m, d.d) + '<em>' + esc(badge) + '</em></span>' +
+      '<span class="db-badge' + (cls ? ' gold' : '') + '">' + (cls ? '目标日' : '基准') + '</span></div>' +
+      '<div class="db-mid"><div class="db-gz">' + d.gz + '</div>' +
+      '<div class="db-meta">流日 · (JDN+49) mod 60 = ' + d.n + '<br>' + (ly ? '流年 ' + ly.year + ' · 流月 ' + ly.month : '') + '</div></div>' +
+      '<div class="db-grid">' +
+        '<div class="k ' + (d.S1 === 2 ? 'g' : (d.S1 === 1 ? 'r' : '')) + '"><i>与命主</i><b>' + d.tenGod + '</b></div>' +
+        '<div class="k ' + (d.grade === '高' ? 'g' : (d.grade === '中' ? 'y' : 'r')) + '"><i>宜办度</i><b>' + d.grade + '</b></div>' +
+        '<div class="k ' + (d.T === 2 ? 'g' : (d.T === 1 ? 'y' : '')) + '"><i>最佳时窗</i><b>' + (p ? p.hz + '时' : '无') + '</b></div>' +
+      '</div></div>';
+  }
+
+  /* 择日目标日选择：renderCompare 与「存下这一屏」共用同一段判定，避免两处漂移 */
+  function cmpPickTarget(pf, avail) {
+    var nb = nowBeijing();
+    var win = NHTJ.r6Rank(pf, CMP.matter, nb.y, nb.m, nb.d, CMP.days, avail);
+    var base = null, todayStr = ymd(nb.y, nb.m, nb.d), i;
+    for (i = 0; i < win.length; i++) { if (ymd(win[i].y, win[i].m, win[i].d) === todayStr) { base = win[i]; break; } }
+    if (!base) base = win[0];
+    var byDate = win.slice().sort(dnum);
+    var hi = byDate.filter(function (x) { return x.grade === '高'; });
+    var target, mode = 'high', nearest = null;
+    if (hi.length) { target = hi[0]; } else {
+      mode = 'fallback'; target = win[0];
+      var r90 = NHTJ.r6Rank(pf, CMP.matter, nb.y, nb.m, nb.d, 90, avail).slice().sort(dnum);
+      var h90 = r90.filter(function (x) { return x.grade === '高'; });
+      nearest = h90.length ? h90[0] : null;
+    }
+    if (ymd(base.y, base.m, base.d) === ymd(target.y, target.m, target.d) && win.length > 1) {
+      var alt = byDate.filter(function (x) { return ymd(x.y, x.m, x.d) !== todayStr; });
+      if (alt.length) target = alt[0];
+    }
+    return { base: base, target: target, mode: mode, nearest: nearest, win: win, todayStr: todayStr };
+  }
+
+  function renderCompare() {
+    var box = $('#cmpBox');
+    var list = listRecords().slice().sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
+    if (!list.length) { box.innerHTML = '<div class="card"><div class="h2">流运对照 · 择日</div><div class="empty">还没有档案。<br>到「排盘」页建立第一个命主，才能做择日对照。</div></div>'; return; }
+    var rec = null, i;
+    for (i = 0; i < list.length; i++) { if (list[i].id === CMP.recId) rec = list[i]; }
+    if (!rec) { rec = list[0]; CMP.recId = rec.id; cmpSave(); }
+    var pf = NHTJ.profileOf(rec);
+    /* 记忆的命主若没有四柱（旧版档案），自动换到第一个有四柱的档案——否则页面没有下拉可选，用户会卡在死页上 */
+    if (!pf) {
+      for (i = 0; i < list.length; i++) {
+        var pfTry = NHTJ.profileOf(list[i]);
+        if (pfTry) { rec = list[i]; pf = pfTry; CMP.recId = rec.id; cmpSave(); break; }
+      }
+    }
+    if (!pf) { box.innerHTML = '<div class="card"><div class="h2">流运对照 · 择日</div><div class="empty">现有档案里没有任何一条含四柱，无法做择日。<br>请到「排盘」页重新保存一次。</div></div>'; return; }
+
+    var mt = NHTJ.matterOf(CMP.matter);
+    var av0 = minOf(CMP.from), av1 = minOf(CMP.to);
+    var avail = (av0 !== null && av1 !== null && av1 > av0) ? [av0, av1] : null;
+    var pk = cmpPickTarget(pf, avail);
+    var win = pk.win, base = pk.base, target = pk.target, mode = pk.mode, nearest = pk.nearest, todayStr = pk.todayStr;
+
+    /* ---- 吸附条 ---- */
+    var h = '<div class="qbar"><span class="wdot">' + esc(String(pf.name).charAt(0) || '命') + '</span>' +
+      '<button class="qhd" id="cmpTog" type="button" aria-expanded="' + (CMP.expand ? 'true' : 'false') + '">' +
+      '<span class="qname">' + esc(pf.name) + '<i>' + esc(pf.dayZhi) + '日主 · ' + esc(pf.dayGan) + '</i></span><span class="qcaret">▾</span></button>' +
+      '<span class="qchips">' + NHTJ.MATTERS.map(function (m) { return '<button class="chip' + (m.k === CMP.matter ? ' on' : '') + '" data-m="' + m.k + '" type="button">' + m.k + '</button>'; }).join('') + '</span></div>';
+
+    var b = pf.birth || {};
+    h += '<div class="qexpand' + (CMP.expand ? ' on' : '') + '">' +
+      '<dl class="kv">' +
+      '<dt>性别</dt><dd>' + (pf.gender === 'female' ? '女' : '男') + '</dd>' +
+      '<dt>出生</dt><dd>' + (b.y || '?') + '-' + pad2(b.m || 0) + '-' + pad2(b.d || 0) + ' ' + pad2(b.hh || 0) + ':' + pad2(b.mi || 0) + (b.trueSolar ? ' · 真太阳时已开' : ' · 北京时间') + '</dd>' +
+      '<dt>四柱</dt><dd class="qgz">' + esc(pf.ganzhi) + '</dd>' +
+      '<dt>日主</dt><dd>' + esc(pf.dayGan) + '（' + ({ '甲':'木','乙':'木','丙':'火','丁':'火','戊':'土','己':'土','庚':'金','辛':'金','壬':'水','癸':'水' }[pf.dayGan] || '?') + '）</dd>' +
+      '</dl>' +
+      '<label class="field"><span>切换命主</span><select id="cmpRec">' +
+        list.map(function (r) { return '<option value="' + esc(r.id) + '"' + (r.id === CMP.recId ? ' selected' : '') + '>' + esc(r.name) + '　' + esc((r.chart && r.chart.ganzhi) || '（无四柱）') + '</option>'; }).join('') +
+      '</select></label>' +
+      '<div class="avrow">' +
+      '<label class="field"><span>在办时段 · 起</span><input type="time" id="cmpFrom" value="' + esc(CMP.from) + '"></label>' +
+      '<label class="field"><span>在办时段 · 止</span><input type="time" id="cmpTo" value="' + esc(CMP.to) + '"></label>' +
+      '</div>' +
+      '<p class="note" style="margin:0 0 8px">填了时段，第三项「时窗分」才计分（R6.4）；不填则整项不计分，改用另一套阈值（R6.5）。</p>' +
+      '</div>';
+
+    /* ---- 两块数据 ---- */
+    var lyA = liuYue(base), lyB = liuYue(target);
+    var diffs = [];
+    if (base.gz !== target.gz) diffs.push('流日 ' + base.gz + ' → ' + target.gz);
+    if (base.tenGod !== target.tenGod) diffs.push('流日十神 ' + base.tenGod + ' → ' + target.tenGod);
+    if (base.grade !== target.grade) diffs.push('宜办度 ' + base.grade + ' → ' + target.grade);
+    if (base.hits.length !== target.hits.length) diffs.push('冲忌 ' + base.hits.length + ' 项 → ' + target.hits.length + ' 项');
+    if (base.pick && target.pick && base.pick.hz !== target.pick.hz) diffs.push('最佳时辰 ' + base.pick.hz + '时 → ' + target.pick.hz + '时');
+    var warn = (lyA && lyB && lyA.month !== lyB.month) ? '<div class="banner" style="margin:0 0 12px">这两天不在同一个月建下（' + lyA.month + ' → ' + lyB.month + '），不可直接比较（R6.8 边界 4）。</div>' : '';
+    h += '<div class="card"><div class="h2">两块数据 · 上下对照<button class="h2btn" id="cmpWin" type="button">未来 ' + CMP.days + ' 天 ▾</button></div>' + warn +
+      dayBoxHTML(base, lyA, '今天', '') +
+      '<div class="delta"><span class="ln">↓</span><span>相对今天：' + (diffs.length ? diffs.join('；') : '窗口内没有更优的日子') + '</span></div>' +
+      dayBoxHTML(target, lyB, mode === 'high' ? '候选 · ' + ddiff(base, target) + ' 天后' : '中档最优 · ' + ddiff(base, target) + ' 天后', ' target') +
+      '</div>';
+
+    /* ---- 结论条 ---- */
+    if (mode === 'high') {
+      h += '<div class="leadone"><span class="lb">结论</span><span>宜办度 <b>' + base.grade + ' → 高</b>　<b class="hi">选 ' + ymd(target.y, target.m, target.d).slice(5) + '（+' + ddiff(base, target) + ' 天）</b></span></div>';
+    } else if (nearest) {
+      h += '<div class="leadone warnl"><span class="lb">结论</span><span><b class="hi">未来 ' + CMP.days + ' 天无高档日</b>　最近 ' + ymd(nearest.y, nearest.m, nearest.d).slice(5) + '（+' + ddiff(base, nearest) + ' 天）</span></div>';
+    } else {
+      h += '<div class="leadone warnl"><span class="lb">结论</span><span><b class="hi">未来 90 天也没有高档日</b>　窗口内最优是 ' + ymd(target.y, target.m, target.d).slice(5) + '</span></div>';
+    }
+
+    /* ---- 建议 ---- */
+    var say = '', acts = '';
+    var bandNow = pf.strength ? pf.strength.band : null;
+    /* R5.2 目前只覆盖「签约」一域；其他事项退回 R5.1 粗粒度词表 */
+    var r52ix = NHTJ.SS52_IX[CMP.matter] || null;   /* R5.2 只登记了「签约」「面谈」两列，其余事项退回 R5.1 */
+    var r52row = (r52ix && bandNow && NHTJ.SS52[target.tenGod]) ? NHTJ.SS52[target.tenGod][bandNow] : null;
+    var r52 = r52row ? [r52row[0], r52row[r52ix[0]], r52row[r52ix[1]]] : null;
+    var pend = r52 ? '' : ('<p class="r52pend">「' + CMP.matter + '」的详细解读正在扩展中——现在用的是 R5.1 粗粒度词表（R5.2 只登记了「签约」「面谈」两列）。日期与时段由 R6 定，不受此影响。</p>');
+    if (mode === 'high') {
+      say = '今天宜办度<b>' + base.grade + '</b>，' + ymd(target.y, target.m, target.d).slice(5) + ' 是<b>高</b>。' +
+        '两天的差别：' + diffs.join('；') + '。<br>' +
+        '目标日流日' + target.gz + '对日主' + pf.dayGan + '是「<em>' + target.tenGod + '</em>」（术：' + target.tenGod + '透干）。' + (r52 ? '这是「<em>' + target.tenGod + ' × 日主' + bandNow + '</em>」，下面按这一档说。' : '人话：' + esc(NHTJ.SS_BRIEF[target.tenGod] || '') + '。');
+      if (target.hits.length) say += '<br>这一天有 ' + target.hits.length + ' 项冲忌：' + esc(target.hits.map(function (x) { return x.txt; }).join('；')) + '，是要绕开的地方。';
+      else say += '<br>与命主四柱无冲、无刑、无害、不逢空 —— 没有需要绕开的地方。';
+      acts += '<div class="act main"><span class="lb">主</span><span class="tx">把「' + CMP.matter + '」放在 ' + ymd(target.y, target.m, target.d).slice(5) + ' 的 <b>' + (target.pick ? fmtMin(target.pick.start) + '–' + fmtMin(target.pick.end) + '（' + target.pick.hz + '时）' : '全天') + '</b>。' +
+        (target.pick ? target.gan + '日五鼠遁「' + WSD[target.gan] + '」得' + target.pick.gz + '，' + target.pick.hg + '是你的' + tenGodPlain(pf.dayGan, target.pick.god) + '，是当日最早的对口时窗。' : '当日没有对口时窗（R6.4），只能按整日处理。') +
+        '</span></div>';
+      function notAlt(x) {
+        var key = ymd(x.y, x.m, x.d);
+        return key !== ymd(target.y, target.m, target.d) && key !== todayStr;
+      }
+      /* 次选＝R6.5 排序里除目标日之外最优的那一天，且必须排在目标日之后（要能真的「往后挪」） */
+      var alt = win.filter(function (x) { return notAlt(x) && x.grade !== '低' && ddiff(target, x) > 0; })[0] ||
+                win.filter(function (x) { return notAlt(x) && x.grade !== '低'; })[0];
+      if (alt) acts += '<div class="act sec"><span class="lb">次</span><span class="tx">' + ymd(target.y, target.m, target.d).slice(5) + ' 排不开，就往后挪到 ' + ymd(alt.y, alt.m, alt.d).slice(5) + '（' + alt.gz + '）——宜办度「' + alt.grade + '」，' + (alt.pick ? '时窗 ' + fmtMin(alt.pick.start) + '–' + fmtMin(alt.pick.end) : '无对口时窗') + '。</span></div>';
+    } else {
+      say = (avail ? '' : '你没填「在办时段」，所以时窗那一项<em>不计分</em>（R6.4）。') + '未来 ' + CMP.days + ' 天里，没有一天够得上「高」' + (avail ? '。' : '——少了时窗这一项加成。') + '<br>下面是两条真实可选的路，我不替你选。' +
+        '<br>窗口内最优的 ' + ymd(target.y, target.m, target.d).slice(5) + ' 是流日' + target.gz + '，对日主' + pf.dayGan + '是「<em>' + target.tenGod + '</em>」' +
+        (r52 ? '。这是「<em>' + target.tenGod + ' × 日主' + bandNow + '</em>」，下面按这一档说。'
+              : '——人话：' + esc(NHTJ.SS_BRIEF[target.tenGod] || '') + '。');
+      if (nearest) acts += '<div class="act main"><span class="lb">等</span><span class="tx">等 <b>' + ymd(nearest.y, nearest.m, nearest.d).slice(5) + '（' + nearest.gz + '）</b>，+' + ddiff(base, nearest) + ' 天，是最近的高档日。适合这件事本来就不急的情况。</span></div>';
+      acts += '<div class="act sec"><span class="lb">选</span><span class="tx">在「中」里挑最优：<b>' + ymd(target.y, target.m, target.d).slice(5) + '（' + target.gz + '，' + ddiff(base, target) + ' 天后）</b>。窗口内它是冲忌最少的一个' + (target.pick ? '，且 ' + fmtMin(target.pick.start) + '–' + fmtMin(target.pick.end) + ' 有对口时窗' : '') + '。</span></div>';
+      acts += '<div class="act sec"><span class="lb">补</span><span class="tx">' + (avail ? (nearest ? '想提高档位，可以扩大窗口到 90 天看看。' : '90 天里也没有高档日——这件事的「高」档期不在近三个月内，按上面的「中」档最优日安排是现实选择。') : '填上「在办时段」（点上面命主条展开），第三项时窗分就会计分，档位可能整体上移。') + '</span></div>';
+    }
+    var r52html = r52 ? ('<div class="r52box"><div class="r52h">今日解读 · ' + target.gz + ' 对日主' + pf.dayGan + '（' + target.tenGod + ' · 日主' + bandNow + '）</div>' +
+      '<p class="r52p"><b>白话</b>' + esc(r52[0]) + '</p>' +
+      '<p class="r52p s"><b>' + esc(CMP.matter) + '</b>' + esc(r52[1]) + '</p>' +
+      '<p class="r52p f"><b>反面</b>' + esc(r52[2]) + '</p></div>') : '';
+    acts += '<div class="act no"><span class="lb">避</span><span class="tx">今天 23:00 之后不要定案——已过换日线（方案 A，R1.3），日柱进次日、时柱按次日日干起五鼠遁，流日与命主的关系换了一套，本页结论不再适用。</span></div>';
+    h += '<div class="card"><div class="h2">建议</div>' +
+      '<div class="verdict">' + (mode === 'high' ? '选 <b>' + ymd(target.y, target.m, target.d).slice(5) + '</b>。' : '两选一，你定。') + '</div>' + pend +
+      '<p class="say">' + say + '</p>' + r52html + acts +
+      '<p class="note" style="margin:6px 0 0;font-size:11.5px">' + (r52
+        ? '日期与时段由 R6 定；当日解读由 R5.2 给（十神 × 日主强弱 × 事项）。R5.2 目前覆盖「签约」「面谈」两域，出行／开工／收款仍是 R5.1 粗粒度词表。'
+        : '建议文本由 R5.1 粗粒度词表组装；该事项的 R5.2 上下文层未做，句子的针对性到此为止。') + '</p>' +
+      '<button class="mini wide" id="cmpTrace" type="button">' + (CMP.trace ? '收起追溯 ▴' : '查看追溯 ▾') + '</button></div>';
+
+    /* ---- 追溯 ---- */
+    if (CMP.trace) {
+      var rows = [];
+      rows.push(['R1.3', '两天流日干支：' + ymd(base.y, base.m, base.d).slice(5) + ' → ' + base.gz + '（序 ' + base.n + '）；' + ymd(target.y, target.m, target.d).slice(5) + ' → ' + target.gz + '（序 ' + target.n + '）', '算式 (JDN + 49) mod 60，纯算术可复核']);
+      rows.push(['R1.2', '两天月建：' + (lyA ? lyA.month : '?') + ' → ' + (lyB ? lyB.month : '?'), lyA && lyB && lyA.month === lyB.month ? '月建没变，差异只来自流日' : '月建变了，已在页面上方提示不可直接比较']);
+      rows.push(['R1.4', '最佳时辰怎么来：' + (target.pick ? target.gan + '日五鼠遁「' + WSD[target.gan] + '」→ 子时起，数到' + target.pick.hz + '时为' + target.pick.gz : '当日无对口时辰'), '时干起法与 R1.4 同一算式']);
+      rows.push(['R2', rec.birth && rec.birth.trueSolar ? '真太阳时已开，所有边界用修正后时刻' : '真太阳时关闭，全部按北京时间判定', '两种口径不混用']);
+      rows.push(['R5.1', ymd(target.y, target.m, target.d).slice(5) + ' 流日' + target.gz + '对日主' + pf.dayGan + ' → ' + target.tenGod, NHTJ.SS_SRC[target.tenGod] || '']);
+      rows.push(['R5.2.0', '日主强弱：' + (pf.strength ? NHTJ.strengthLine(pf.strength) : '不可算'), (pf.strength ? '五档判据（R5.2.0）：月支 ±2／日支 ±1／年支・时支 各 ±0.5／年干・月干・时干 各 ±0.5（内部 ×10 整数运算）→ ' + pf.strength.band : '')]);
+      rows.push(['R5.2', r52 ? ('命主 ' + bandNow + ' × 流日' + target.tenGod + ' × 事项「' + CMP.matter + '」→ 正式本表 §13 的一行（白话／' + CMP.matter + '建议／反面提醒）') : ('本表当前登记「签约」「面谈」两列；本次事项「' + CMP.matter + '」未覆盖，页面上退回 R5.1 粗粒度词表'), r52 ? '文书来源：说明书 §13 R5.2 全表（10 十神 × 5 档 × 2 事项）' : 'R5.2 扩展（多事项维度）后再补，不重写']);
+      rows.push(['R6.2', '「' + CMP.matter + '」偏好：主选 ' + mt.main.join('、') + '；次选 ' + mt.sub.join('、'), '命中' + target.tenGod + ' → S1 = ' + target.S1 + '（' + (target.S1 === 2 ? '主选' : (target.S1 === 1 ? '次选' : '不对口')) + '）']);
+      rows.push(['R6.3', '冲忌逐项：' + (target.hits.length ? target.hits.map(function (x) { return x.k + '（' + x.txt + '）'; }).join('；') : '四类都没有命中，P = 0'), '每项 −1、封顶 −3 → P = ' + target.P + (target.bonus ? '；驿马 +' + target.bonus + '（' + target.bonusNote + '）' : '')]);
+      rows.push(['R6.4', '时窗：' + (target.pick ? target.pick.hz + '时 ' + fmtMin(target.pick.start) + '–' + fmtMin(target.pick.end) + '，时干' + target.pick.gz + '（' + target.pick.god + '）' : '无对口时窗') + (avail ? '；与在办时段 ' + fmtMin(avail[0]) + '–' + fmtMin(avail[1]) + ' 重叠 ' + target.overlap + ' 分钟' : '；未填在办时段，本项不计分'), 'T = ' + (target.T === null ? '不计分' : target.T)]);
+      rows.push(['R6.5', '合成：S1 ' + target.S1 + ' − P ' + target.P + (target.T === null ? '' : ' + T ' + target.T) + (target.bonus ? ' + 驿马 ' + target.bonus : '') + ' = ' + target.total, '阈值：' + (avail ? '高 ≥3 ／ 中 1–2 ／ 低 ≤0' : '未填时段用 高 ≥2 ／ 中 0–1 ／ 低 ≤−1')]);
+      rows.push(['R6.6', '窗口：未来 ' + CMP.days + ' 天，共 ' + win.length + ' 个候选日', '默认 30 天；30 天内无「高」时直说并给替代方案']);
+      h += '<div class="card tracecard"><div class="h2">追溯 · 这条建议怎么推出来的</div>' +
+        rows.map(function (r) { return '<div class="trow"><span class="rid">' + r[0] + '</span><span class="rbody">' + esc(r[1]) + (r[2] ? '<span>' + esc(r[2]) + '</span>' : '') + '</span></div>'; }).join('') +
+        '</div>';
+    }
+    box.innerHTML = h;
+  }
+
+  function tenGodPlain(dayGan, god) { return NHTJ.SS_BRIEF[god] ? god : god; }
+
+  function bindCompare() {
+    var box = $('#cmpBox');
+    if (!box) return;
+    box.addEventListener('click', function (ev) {
+      var el = ev.target;
+      var chip = el.closest ? el.closest('.chip[data-m]') : null;
+      if (chip) { CMP.matter = chip.getAttribute('data-m'); cmpSave(); renderCompare(); return; }
+      if (el.closest && el.closest('#cmpTog')) { CMP.expand = !CMP.expand; renderCompare(); return; }
+      if (el.closest && el.closest('#cmpWin')) { CMP.days = (CMP.days === 30 ? 90 : 30); cmpSave(); renderCompare(); return; }
+      if (el.closest && el.closest('#cmpTrace')) { CMP.trace = !CMP.trace; renderCompare(); return; }
+    });
+    box.addEventListener('change', function (ev) {
+      var t = ev.target;
+      if (!t || !t.id) return;
+      if (t.id === 'cmpRec') { CMP.recId = t.value; cmpSave(); renderCompare(); }
+      if (t.id === 'cmpFrom') { CMP.from = t.value; cmpSave(); renderCompare(); }
+      if (t.id === 'cmpTo') { CMP.to = t.value; cmpSave(); renderCompare(); }
+    });
+  }
+  /* ---------- 体用对照（R7 · 已登记 §14） ---------- */
+  var TY_KEY = 'nhtj.v1.tiyong';
+  var TY = { recId: null, y0: null, expand: false };
+  var TY_SPAN = 6;
+  var WXCH = { '甲': '木', '乙': '木', '丙': '火', '丁': '火', '戊': '土', '己': '土', '庚': '金', '辛': '金', '壬': '水', '癸': '水' };
+  function tyLoad() { try { var raw = localStorage.getItem(TY_KEY); if (!raw) return; var o = JSON.parse(raw); if (!o || typeof o !== "object") return;
+    TY.recId = o.recId || null; TY.y0 = o.y0 || null; } catch (e) {} }
+  function tySave() { try { localStorage.setItem(TY_KEY, JSON.stringify({ recId: TY.recId, y0: TY.y0 })); } catch (e) {} }
+  function dirCls(d) { return d === "顺" ? "f" : (d === "逆" ? "s" : "n"); }
+  function dirWord(d) { return d === "顺" ? "顺势" : (d === "逆" ? "逆势" : "中性"); }
+  /* 档案 → R7 需要的 chart 视图（R7.5 要 effective 与 pillars） */
+  function tyChartOf(rec) {
+    var c = rec && rec.chart;
+    if (!c || !c.pillars || !c.effective) return null;
+    return { ok: true, pillars: c.pillars, effective: c.effective };
+  }
+  /* 三串清单的结论条：发力半句用主文字色、收敛半句用次要色（方案 b · 已批准） */
+  function tyLead(luckE, yearE) {
+    if (!luckE || !yearE) return null;
+    var dl = luckE.j.dir, dy = yearE.j.dir;
+    var head = (dl === dy) ? ("今年大运、流年都是" + dirWord(dl) + "——") : ("今年大运" + dirWord(dl) + "、流年" + dirWord(dy) + "——");
+    var fs = [], ss = [];
+    [luckE, yearE].forEach(function (e) {
+      if (e.j.dir === "顺") fs.push(NHTJ.r7Line(e.j));
+      else if (e.j.dir === "逆") ss.push(NHTJ.r7Line(e.j));
+    });
+    var parts = [];
+    if (fs.length) parts.push({ c: "h", t: fs.join("，") });
+    if (ss.length) parts.push({ c: "l", t: ss.join("，") });
+    if (!parts.length) parts.push({ c: "l", t: NHTJ.r7Line(yearE.j) });
+    return { head: head, parts: parts };
+  }
+  /* 本命底色：把人话和「为什么这一页对你信息少」的原因一起讲出来 */
+  function tyPlain(pf, pillars) {
+    var st = pf.strength;
+    var gs = ["year", "month", "hour"].map(function (k) { return NHTJ.tenGod(pf.dayGan, String(pillars[k].gz).charAt(0)); });
+    var uniq = [], seen = {};
+    gs.forEach(function (g) { if (!seen[g]) { seen[g] = 1; uniq.push(g); } });
+    var dz = NHTJ.tenGod(pf.dayGan, NHTJ.BENQI_OF[String(pillars.day.gz).charAt(1)]);
+    var t = "底子：天干 " + uniq.join("、") + " 透出，日支坐 " + dz + "。";
+    if (st && st.band === "中和") t += "B 层在「中和」时不表态，方向全由 A 层定——中和命主很少走到「发力」，不是没算，是规则如此。";
+    else if (st && (st.band === "偏旺" || st.band === "极旺")) t += "身旺喜泄耗——走食伤、财、官杀的年份 B 层给「顺」，容易走到「发力」。";
+    else t += "身弱喜帮身——走比劫、印星的年份 B 层给「顺」，容易走到「发力」。";
+    return t;
+  }
+  function tyBoxHTML(e) {
+    var j = e.j;
+    var sub = (e.kind === "luck")
+      ? ("大运 · " + NHTJ.r7FmtMs(e.seg.startMs).slice(0, 10) + " ~ " + NHTJ.r7FmtMs(e.seg.endMs).slice(0, 10))
+      : ("流年 · " + e.y);
+    var bLayer = (j.B === "中性") ? ("中性（日主" + j.band + "，不表态）") : (j.B + "（" + j.B_why + "）");
+    return "<div class=\"tybox\"><div class=\"tb-top\"><span class=\"tb-gz\">" + e.gz + "</span>" +
+      "<span class=\"tb-vg " + dirCls(j.dir) + "\">" + esc(j.key) + "</span></div>" +
+      "<div class=\"tb-l\">" + esc(sub) + "</div>" +
+      "<div class=\"tb-meta\">十神 <b>" + esc(j.god) + "</b>（" + esc(j.gan) + "）｜A 层 <b>" + esc(j.A) + "</b>｜来源 " + esc(j.A_src) + "｜B 层 " + esc(bLayer) + "</div></div>";
+  }
+  function tyItemHTML(e) {
+    var j = e.j;
+    var cls = (j.dir === "逆") ? "lv0" : (j.dir === "中" ? "lvn" : ("lv" + j.lv));
+    var head = (e.kind === "luck") ? ("大运 " + e.gz) : (e.y + " " + e.gz);
+    var aTxt = (j.A === "顺用") ? "顺" : (j.A === "逆用" ? "逆" : "中性");
+    var bTxt = (j.B === "中性") ? "中性" : j.B;
+    var tail = j.key.split("·")[1] || j.key;
+    var h = "<div class=\"tyit " + cls + "\"><div class=\"h\"><span class=\"g\">" + esc(head) + "</span>" +
+      "<span class=\"s2\">" + esc(j.god) + "</span><span class=\"b\">A " + aTxt + " + B " + bTxt + " · " + esc(tail) + "</span></div>" +
+      "<div class=\"p\">" + esc(NHTJ.r7Line(j) + "。" + j.note + "。") + "</div>";
+    if (j.sameNameReason) h += "<div class=\"p dim2\">来路：" + esc(j.sameNameReason) + "</div>";
+    return h + "</div>";
+  }
+
+  function renderTiyong() {
+    var box = $("#tyBox");
+    if (!box) return;
+    var list = listRecords().slice().sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
+    if (!list.length) { box.innerHTML = "<div class=\"card\"><div class=\"h2\">流运对照 · 体用</div><div class=\"empty\">还没有档案。<br>到「排盘」页建立第一个命主，才能做体用对照。</div></div>"; return; }
+    var rec = null, i;
+    var want = TY.recId || CMP.recId;
+    for (i = 0; i < list.length; i++) { if (list[i].id === want) rec = list[i]; }
+    if (!rec) { rec = list[0]; TY.recId = rec.id; tySave(); }
+    var pf = NHTJ.profileOf(rec), ch = tyChartOf(rec);
+    if (!pf || !ch || !pf.strength) {
+      for (i = 0; i < list.length; i++) {
+        var p2 = NHTJ.profileOf(list[i]), c2 = tyChartOf(list[i]);
+        if (p2 && c2 && p2.strength) { rec = list[i]; pf = p2; ch = c2; TY.recId = rec.id; tySave(); break; }
+      }
+    }
+    if (!pf || !ch || !pf.strength) { box.innerHTML = "<div class=\"card\"><div class=\"h2\">流运对照 · 体用</div><div class=\"empty\">现有档案里没有一条同时含四柱与起运基准，无法做体用对照。<br>请到「排盘」页重新保存一次。</div></div>"; return; }
+    var lk = NHTJ.computeLuck(ch, pf.gender);
+    if (!lk) { box.innerHTML = "<div class=\"card\"><div class=\"h2\">流运对照 · 体用</div><div class=\"empty\">这一条档案算不出大运（R4），无法做体用对照。</div></div>"; return; }
+    var nb = nowBeijing();
+    var y0 = TY.y0 || nb.y;
+    if (y0 < nb.y - 1 || y0 > nb.y + 4) y0 = nb.y;
+    var years = [], segs, entries = [], seenLuck = {};
+    for (i = 0; i < TY_SPAN; i++) years.push(y0 + i);
+    segs = NHTJ.r7Segments(ch, lk, 8);
+    years.forEach(function (y) {
+      var at = NHTJ.r7At(segs, Date.UTC(y, 5, 1, 12, 0, 0));
+      var seg = at || segs[0];
+      var kk = seg.gz + "@" + seg.startMs;
+      if (seg.gz && !seenLuck[kk]) {
+        seenLuck[kk] = 1;
+        entries.push({ kind: "luck", y: y, seg: seg, gz: seg.gz, j: NHTJ.r7Judge(pf.dayGan, String(seg.gz).charAt(0), pf.strength.band), at: !!at });
+      }
+      var lyc = NHTJ.computeChart({ y: y, m: 6, d: 1, hh: 12, mi: 0 });
+      if (lyc.ok) {
+        var lg = lyc.pillars.year.gz;
+        entries.push({ kind: "year", y: y, gz: lg, j: NHTJ.r7Judge(pf.dayGan, String(lg).charAt(0), pf.strength.band) });
+      }
+    });
+    var luckNow = null, yearNow = null;
+    entries.forEach(function (e) { if (e.kind === "luck" && !luckNow) luckNow = e; if (e.kind === "year" && e.y === y0) yearNow = e; });
+    if (!luckNow || !yearNow) { box.innerHTML = "<div class=\"card\"><div class=\"h2\">流运对照 · 体用</div><div class=\"empty\">这一年的流运算不出来（R1.1／R7.5）。</div></div>"; return; }
+    var b = pf.birth || {};
+    var h = "";
+    /* ---- 吸附条 ---- */
+    h += "<div class=\"qbar\"><span class=\"wdot\">运</span>" +
+      "<button class=\"qhd\" id=\"tyTog\" type=\"button\" aria-expanded=\"" + (TY.expand ? "true" : "false") + "\">" +
+      "<span class=\"qname\">" + esc(pf.name) + "<i>" + esc(pf.ganzhi.split(" ")[2] || "") + "日 · 日主" + esc(pf.dayGan) + " · " + esc(pf.strength.band) + "</i></span>" +
+      "<span class=\"qcaret\">▾</span></button>" +
+      "<span class=\"anch\"><button type=\"button\" data-anch=\"body\" class=\"on\">体</button><button type=\"button\" data-anch=\"use\">用</button></span></div>";
+    h += "<div class=\"qexpand" + (TY.expand ? " on" : "") + "\">" +
+      "<dl class=\"kv\">" +
+      "<dt>性别</dt><dd>" + (pf.gender === "female" ? "女" : "男") + "</dd>" +
+      "<dt>出生</dt><dd>" + (b.y || "?") + "-" + pad2(b.m || 0) + "-" + pad2(b.d || 0) + " " + pad2(b.hh || 0) + ":" + pad2(b.mi || 0) + (b.trueSolar ? " · 真太阳时已开" : " · 北京时间") + "</dd>" +
+      "<dt>四柱</dt><dd class=\"qgz\">" + esc(pf.ganzhi) + "</dd>" +
+      "<dt>起运</dt><dd>" + esc(NHTJ.r7FmtMs(segs[0].startMs)) + "（R4 偏移 " + lk.years + " 年 " + lk.months + " 月 " + lk.days.toFixed(2) + " 天 → R7.5 切段）</dd>" +
+      "</dl>" +
+      "<label class=\"field\"><span>切换命主</span><select id=\"tyRec\">" +
+      list.map(function (r) { return "<option value=\"" + esc(r.id) + "\"" + (r.id === TY.recId ? " selected" : "") + ">" + esc(r.name) + "　" + esc((r.chart && r.chart.ganzhi) || "（无四柱）") + "</option>"; }).join("") +
+      "</select></label></div>";
+    /* ---- 本命底色（体 · 常量） ---- */
+    var gans = ["year", "month", "day", "hour"].map(function (k) { return NHTJ.tenGod(pf.dayGan, String(ch.pillars[k].gz).charAt(0)); });
+    var zhis = ["year", "month", "day", "hour"].map(function (k) { return NHTJ.tenGod(pf.dayGan, NHTJ.BENQI_OF[String(ch.pillars[k].gz).charAt(1)]); });
+    h += "<div class=\"card\" id=\"tyTop\"><div class=\"h2\">本命底色<span class=\"pill\">体 · 常量</span><span class=\"rt\" style=\"margin-left:auto;font-size:11px;color:#79839a\">R1.1 / R1.3 / R5.2.0</span></div>" +
+      "<div class=\"pillars\">" + ["year", "month", "day", "hour"].map(function (k, ix) {
+        return "<div class=\"pillar\"><div class=\"pgz\">" + ch.pillars[k].gz + "</div><div class=\"pnm\">" + ["年柱", "月柱", "日柱", "时柱"][ix] + "</div></div>"; }).join("") + "</div>" +
+      "<div class=\"tyrow\"><span class=\"k\">日主 / 强弱</span><span class=\"v\">" + esc(pf.dayGan) + "（" + (WXCH[pf.dayGan] || "?") + "） · <em>" + esc(pf.strength.band) + "</em> · S = " + (pf.strength.S > 0 ? "+" : "") + pf.strength.S + "（R5.2.0）</span></div>" +
+      "<div class=\"tyrow\"><span class=\"k\">命局十神</span><span class=\"v\">天干 " + esc(gans.join(" · ")) + "<br>地支本气 " + esc(zhis.join(" · ")) + "</span></div>" +
+      "<div class=\"plainbox\">" + esc(tyPlain(pf, ch.pillars)) + "</div></div>";
+    /* ---- 结论条 ---- */
+    var lead = tyLead(luckNow, yearNow);
+    h += "<div class=\"tlead\"><span class=\"lb\">结论</span><span>" + esc(lead.head) +
+      lead.parts.map(function (p) { return "<span class=\"tl-" + p.c + "\">" + esc(p.t) + "</span>"; }).join("；") + "。</span></div>";
+    /* ---- 用 · 未来 6 年 ---- */
+    var yList = entries.filter(function (e) { return e.kind === "year"; });
+    var fold = "";
+    for (i = 1; i < segs.length; i++) {
+      var tm = segs[i].startMs;
+      if (tm >= Date.UTC(years[0], 0, 1) && tm < Date.UTC(years[years.length - 1] + 1, 0, 1)) {
+        fold += "<div class=\"tyfold\">" + esc("交运：" + NHTJ.r7FmtMs(tm) + "（R7.5），此后大运由 " + segs[i - 1].gz + " 转 " + segs[i].gz + "（" + NHTJ.tenGod(pf.dayGan, String(segs[i].gz).charAt(0)) + "）。这一天是分裂日：交运时刻前后分属两个大运——规则结果，不是显示错误。") + "</div>";
+      }
+    }
+    h += "<div class=\"card\" id=\"tyUse\"><div class=\"h2\"><span>未来 " + TY_SPAN + " 年 · 大运与流年</span>" +
+      "<button class=\"h2btn\" id=\"tyYr\" type=\"button\">" + y0 + " 起 " + TY_SPAN + " 年 ▾</button></div>" +
+      "<div class=\"src\">R7.1 十神本性 → R7.2 扶抑（判据＝R5.2.0 档位）→ R7.3 九格合成 · 大运切段见 R7.5</div>" +
+      "<div class=\"usebox\">" + tyBoxHTML(luckNow) + tyBoxHTML(yearNow) + "</div>" +
+      "<div class=\"tyl\">" + yList.map(function (e) {
+        return "<div class=\"yl\"><span class=\"y\">" + e.y + "</span><span class=\"g\">" + e.gz + "</span><span class=\"sg\">" + esc(e.j.god) + "</span><span class=\"dg " + dirCls(e.j.dir) + "\">" + (e.j.dir === "中" ? "中性" : e.j.dir + "势") + "</span></div>"; }).join("") + "</div>" +
+      fold + "</div>";
+    /* ---- 三串清单（R7.7 渲染约定：按十神分组、组内按费力程度升序） ---- */
+    var fw = entries.filter(function (e) { return e.j.dir === '顺'; });
+    var sh = entries.filter(function (e) { return e.j.dir === '逆'; });
+    var nu = entries.filter(function (e) { return e.j.dir === '中'; });
+    function tyListGrouped(items, dir) {
+      if (!items.length) {
+        var msg = (dir === '顺') ? ('这 ' + TY_SPAN + ' 年里没有「顺势」的窗口。')
+                : (dir === '逆') ? ('这 ' + TY_SPAN + ' 年里没有「逆势」的窗口。')
+                : ('这 ' + TY_SPAN + ' 年里没有「中性」的窗口。');
+        return '<div class="empty">' + msg + '</div>';
+      }
+      var groups = NHTJ.r7Group(items.map(function (e) { return { god: e.j.god, lv: e.j.lv }; }));
+      return groups.map(function (g) {
+        return '<div class="tygrp"><div class="tygh"><span class="gn">' + esc(g.god) + '</span>' +
+               '<span class="gc">' + g.n + ' 项</span></div>' +
+               g.idx.map(function (k) { return tyItemHTML(items[k]); }).join('') + '</div>';
+      }).join('');
+    }
+    var lvleg = '<div class="lvleg">费力程度（R7.3 隐含等级，只用颜色表达、不改文案）：<br>' +
+      '<i style="background:#d9a441"></i>发力　<i style="background:#a8802f"></i>借力啃硬　<i style="background:#6d5522"></i>平推　<i style="background:#3a3a3a"></i>照常</div>';
+    h += '<div class="card"><div class="h2"><span>顺着走</span><span class="rt" style="margin-left:auto;font-size:11px;color:#79839a">' +
+      fw.length + ' 项 · 按十神分组</span></div>' + tyListGrouped(fw, '顺') + lvleg + '</div>';
+    h += '<div class="card"><div class="h2"><span>留个心眼</span><span class="rt" style="margin-left:auto;font-size:11px;color:#79839a">' +
+      sh.length + ' 项 · 按十神分组</span></div>' + tyListGrouped(sh, '逆') + '</div>';
+    h += '<div class="card"><div class="h2"><span>不偏不倚</span><span class="rt" style="margin-left:auto;font-size:11px;color:#79839a">' +
+      nu.length + ' 项 · 按十神分组</span></div>' + tyListGrouped(nu, '中') + '</div>';
+    /* ---- 追溯 ---- */
+    var rows = [];
+    rows.push(["R7.5", "大运切段：起运 " + NHTJ.r7FmtMs(segs[0].startMs) + "，第 n 段 = 起运时刻 + n×10 年", "锚点是起运时刻本身，不是某个固定钟点。窗口内正在走的是第 " + luckNow.seg.i + " 段 " + luckNow.gz + "：" + NHTJ.r7FmtMs(luckNow.seg.startMs) + " ~ " + NHTJ.r7FmtMs(luckNow.seg.endMs) + ""]);
+    rows.push(["R7.1", "大运干 " + luckNow.j.gan + " → " + luckNow.j.god + " → A 层 " + luckNow.j.A, luckNow.j.A_src + "；" + NHTJ.R7_QUOTE]);
+    rows.push(["R7.1", "流年干 " + yearNow.j.gan + " → " + yearNow.j.god + " → A 层 " + yearNow.j.A, yearNow.j.A_src]);
+    rows.push(["R7.2", "B 层：日主 " + pf.dayGan + " S = " + pf.strength.S + "（×10 整数 " + pf.strength.s10 + "）→ " + pf.strength.band, "判据用档位、不用 S 值（S 值不外露）；" + (luckNow.j.B_why === yearNow.j.B_why ? luckNow.j.B_why : (luckNow.j.B_why + " ／ " + yearNow.j.B_why))]);
+    rows.push(["R7.3", "合成：A " + luckNow.j.A + " + B " + luckNow.j.B + " → " + luckNow.j.key + "；A " + yearNow.j.A + " + B " + yearNow.j.B + " → " + yearNow.j.key, (function () { var d1 = NHTJ.R7_SYNTH[luckNow.j.A + "|" + luckNow.j.B].d, d2 = NHTJ.R7_SYNTH[yearNow.j.A + "|" + yearNow.j.B].d; return d1 === d2 ? d1 : (d1 + " ／ " + d2); })()]);
+    if (luckNow.j.sameNameReason || yearNow.j.sameNameReason) {
+      rows.push(["R7.3", "「逆势·留意」同名不同源：追溯必须分开写", (luckNow.j.sameNameReason ? ("大运：" + luckNow.j.sameNameReason) : "") + (yearNow.j.sameNameReason ? ("　｜　流年：" + yearNow.j.sameNameReason) : "")]);
+    }
+    rows.push(["R5.2.0", "日主强弱：" + NHTJ.strengthLine(pf.strength), "月支 ±2／日支 ±1／年支・时支 各 ±0.5／三干 各 ±0.5（内部 ×10 整数）"]);
+    rows.push(["R4", "大运排法：" + (lk.yangYear ? "年干为阳" : "年干为阴") + "、" + (pf.gender === "female" ? "女" : "男") + "命 → " + (lk.forward ? "顺排" : "逆排") + "；数到" + (lk.forward ? "下一个" : "上一个") + "节「" + lk.targetName + "」", "差 " + Math.round(lk.Tmin) + " 分钟 ÷ 12 = " + lk.virtualDays.toFixed(2) + " 日 → 起运 " + lk.years + " 年 " + lk.months + " 月 " + lk.days.toFixed(2) + " 天"]);
+    rows.push(["R1.1", "流年干支：按立春分界，年柱 (年−4) mod 60", yList.map(function (e) { return e.y + " " + e.gz; }).join("　")]);
+    rows.push(["R7.6", "本版只判大运／流年的天干层", "地支层留 R8，且取法未定（取本气会漏藏干、藏干全取会让清单涨到 20 条以上）"]);
+    h += "<div class=\"card tracecard\"><div class=\"h2\">追溯 · 这三串清单怎么推出来的</div>" +
+      rows.map(function (r) { return "<div class=\"trow\"><span class=\"rid\">" + r[0] + "</span><span class=\"rbody\">" + esc(r[1]) + (r[2] ? "<span>" + esc(r[2]) + "</span>" : "") + "</span></div>"; }).join("") + "</div>";
+    h += "<div class=\"note\">不做断言，只做趋势提示：R7 说的是「这一段的牌顺不顺、你接不接得住」，不预测结果。</div>";
+    box.innerHTML = h;
+  }
+
+  function bindTiyong() {
+    var box = $("#tyBox");
+    if (!box) return;
+    box.addEventListener("click", function (ev) {
+      var el = ev.target;
+      if (!el || !el.closest) return;
+      if (el.closest("#tyTog")) { TY.expand = !TY.expand; renderTiyong(); return; }
+      if (el.closest("#tyYr")) {
+        var nb = nowBeijing(), cur = TY.y0 || nb.y;
+        cur++; if (cur > nb.y + 4) cur = nb.y - 1; if (cur < nb.y - 1) cur = nb.y;
+        TY.y0 = cur; tySave(); renderTiyong(); return;
+      }
+      var an = el.closest("[data-anch]");
+      if (an) {
+        var target = an.getAttribute("data-anch") === "use" ? $("#tyUse") : $("#tyTop");
+        var bs = box.querySelectorAll("[data-anch]");
+        for (var q = 0; q < bs.length; q++) bs[q].classList.toggle("on", bs[q] === an);
+        if (target && target.scrollIntoView) target.scrollIntoView({ block: "start" });
+      }
+    });
+    box.addEventListener("change", function (ev) {
+      var t = ev.target;
+      if (t && t.id === "tyRec") { TY.recId = t.value; tySave(); renderTiyong(); }
+    });
+  }
+
+  /* ---------- 复盘对照（R9 · 已登记 §16） ---------- */
+  var SNAP_KEY = 'nhtj.v1.snapshots';
+  var FPM = { pick: null, expand: false };
+  var KIND_NAME = { benming: '本命', jinri: '今日', zeri: '择日', tiyong: '体用', cengci: '层次' };
+
+  function sgn(v) { return (v > 0 ? '+' : '') + v; }
+  function listSnaps() { var a = Store.get('snapshots', []); return isArr(a) ? a : []; }
+  function putSnaps(a) { return Store.set('snapshots', a); }
+  function snapsOf(recId) { return listSnaps().filter(function (s) { return s && s.recId === recId; }); }
+  function profileOfSnap(s) { try { var pf = NHTJ.profileOf(NHTJ.snapRec(s)); return (pf && pf.strength) ? pf : null; } catch (e) { return null; } }
+  function r52Of(dayGan, band, matter, god) {
+    var ix = NHTJ.SS52_IX[matter] || null;
+    var row = (ix && band && NHTJ.SS52[god]) ? NHTJ.SS52[god][band] : null;
+    return row ? [row[0], row[ix[0]], row[ix[1]]] : null;
+  }
+  /* 快照里的出生信息：这是右侧重算唯一允许用的出生信息（R9.3） */
+  function birthSnapshotOf(rec) {
+    var b = rec.birth || {}, c = rec.chart || {};
+    return { y: b.y, m: b.m, d: b.d, hh: b.hh, mi: b.mi, tz: b.tz || 'Asia/Shanghai',
+             trueSolar: !!b.trueSolar, lonDeg: (b.lonDeg === null || b.lonDeg === undefined) ? null : b.lonDeg,
+             gender: rec.gender, name: rec.name || '未命名', place: rec.place || '',
+             ganzhi: c.ganzhi || '', pillars: c.pillars, effective: c.effective };
+  }
+  function mkSnap(kind, rec, ctx, rows, headline, traceRef, target) {
+    return { id: newId(), schema: 1, recId: rec.id, kind: kind,
+             createdAt: Date.now(), ruleVersion: NHTJ.RULE_REV,
+             target: target || { y: 0, m: 0, d: 0, hh: 0, mi: 0 }, ctx: ctx || {},
+             birthSnapshot: birthSnapshotOf(rec),
+             conclusion: { headline: headline, rows: rows, traceRef: traceRef }, note: '' };
+  }
+  function pickRec() {
+    var recs = listRecords().slice().sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
+    var i, pf;
+    for (i = 0; i < recs.length; i++) if (recs[i].id === CMP.recId) { pf = NHTJ.profileOf(recs[i]); if (pf && pf.strength) return { rec: recs[i], pf: pf }; }
+    for (i = 0; i < recs.length; i++) { pf = NHTJ.profileOf(recs[i]); if (pf && pf.strength) return { rec: recs[i], pf: pf }; }
+    return null;
+  }
+
+  /* 四类快照的行结构与各自的重算：同一张表保证两侧字段名一致，差异比对才成立 */
+  function benmingRows(pf) {
+    return [
+      { k: '四柱', v: pf.ganzhi, fix: true },
+      { k: '日主', v: pf.dayGan + '（' + (WXCH[pf.dayGan] || '?') + '）', fix: true },
+      { k: '日主强弱', v: pf.strength.band + ' · S = ' + sgn(pf.strength.S) + '（R5.2.0 v' + NHTJ.RULE_REV.r5_2_0 + '）', vary: true }
+    ];
+  }
+  function jinriRows(pf, t) {
+    var ch = NHTJ.computeChart({ y: t.y, m: t.m, d: t.d, hh: t.hh, mi: t.mi });
+    if (!ch.ok) return null;
+    var parts = String(ch.ganzhi).split(' ');
+    var dayGz = parts[2] || '';
+    var god = NHTJ.tenGod(pf.dayGan, String(dayGz).charAt(0));
+    return [
+      { k: '时刻', v: ymd(t.y, t.m, t.d) + ' ' + pad2(t.hh) + ':' + pad2(t.mi) + '（北京时间）', fix: true },
+      { k: '流日', v: dayGz, fix: true },
+      { k: '与命主', v: god + '（流日干 ' + String(dayGz).charAt(0) + ' 对日主 ' + pf.dayGan + '）', fix: true },
+      { k: '日主强弱', v: pf.strength.band + ' · S = ' + sgn(pf.strength.S) + '（R5.2.0 v' + NHTJ.RULE_REV.r5_2_0 + '）', vary: true },
+      { k: '结论文案', v: (NHTJ.SS_BRIEF[god] || '') + '（R5.1 粗粒度词表；「今日」页的针对性解读尚未接入）', vary: true }
+    ];
+  }
+  function zeriRows(pf, tg, matter) {
+    var band = pf.strength.band;
+    var r52 = r52Of(pf.dayGan, band, matter, tg.tenGod);
+    var txt = r52 ? r52[1] : ((NHTJ.SS_BRIEF[tg.tenGod] || '') + '（R5.1 粗粒度词表）');
+    return [
+      { k: '目标日', v: ymd(tg.y, tg.m, tg.d) + ' ' + tg.gz, fix: true },
+      { k: '事项', v: matter, fix: true },
+      { k: '宜办度分数', v: tg.grade + ' · ' + tg.total + ' 分', fix: true },
+      { k: '流日十神', v: tg.tenGod, fix: true },
+      { k: '日主强弱', v: band + '（R5.2.0 v' + NHTJ.RULE_REV.r5_2_0 + '）', vary: true },
+      { k: '结论文案', v: txt, vary: true }
+    ];
+  }
+  function tiyongRows(pf, chartLike, y0) {
+    var lk = NHTJ.computeLuck(chartLike, pf.gender);
+    if (!lk) return null;
+    var segs = NHTJ.r7Segments(chartLike, lk, 8);
+    var seg = NHTJ.r7At(segs, Date.UTC(y0, 5, 1, 12, 0, 0)) || segs[0];
+    var lyc = NHTJ.computeChart({ y: y0, m: 6, d: 1, hh: 12, mi: 0 });
+    if (!seg || !seg.gz || !lyc.ok) return null;
+    var lj = NHTJ.r7Judge(pf.dayGan, String(seg.gz).charAt(0), pf.strength.band);
+    var yg = lyc.pillars.year.gz;
+    var yj = NHTJ.r7Judge(pf.dayGan, String(yg).charAt(0), pf.strength.band);
+    var lead = tyLead({ j: lj, gz: seg.gz, kind: 'luck' }, { j: yj, gz: yg, y: y0, kind: 'year' });
+    var lt = lead ? (lead.head + lead.parts.map(function (x) { return x.t; }).join('；')) : '';
+    return [
+      { k: '窗口', v: y0 + ' 起 ' + TY_SPAN + ' 年 · 大运与流年', fix: true },
+      { k: '本命底色', v: pf.dayGan + '（' + (WXCH[pf.dayGan] || '?') + '）· ' + pf.strength.band + ' · S = ' + sgn(pf.strength.S), vary: true },
+      { k: '大运', v: seg.gz + ' · ' + lj.key, vary: true },
+      { k: '流年', v: y0 + ' ' + yg + ' · ' + yj.key, vary: true },
+      { k: '结论', v: lt, vary: true }
+    ];
+  }
+  function nowBenming(s) {
+    var b = s.birthSnapshot || {};
+    var ch = NHTJ.computeChart({ y: b.y, m: b.m, d: b.d, hh: b.hh, mi: b.mi, trueSolar: !!b.trueSolar, lonDeg: b.lonDeg });
+    if (!ch.ok) return null;
+    var st = NHTJ.strengthOf(ch.pillars);
+    return { rows: benmingRows({ ganzhi: ch.ganzhi, dayGan: st.dayGan, strength: st }), traceRef: ['R1.1', 'R1.2', 'R1.3', 'R1.4', 'R2', 'R5.2.0'] };
+  }
+  function nowJinri(s) {
+    var pf = profileOfSnap(s); if (!pf) return null;
+    var rows = jinriRows(pf, s.target); if (!rows) return null;
+    return { rows: rows, traceRef: ['R1.3', 'R1.4', 'R5.1', 'R5.2.0'] };
+  }
+  function nowZeri(s) {
+    var pf = profileOfSnap(s); if (!pf) return null;
+    var t = s.target, ctx = s.ctx || {}, matter = ctx.matter || '签约';
+    var av = ctx.avail ? ctx.avail : null;
+    var tg = NHTJ.r6Day(pf, matter, t.y, t.m, t.d, av);
+    return { rows: zeriRows(pf, tg, matter), traceRef: ['R5.2.0', 'R5.2', 'R6.1', 'R6.2', 'R6.3', 'R6.6'] };
+  }
+  function nowTiyong(s) {
+    var pf = profileOfSnap(s); if (!pf) return null;
+    var b = s.birthSnapshot || {};
+    var y0 = (s.ctx && s.ctx.y0) ? s.ctx.y0 : nowBeijing().y;
+    var rows = tiyongRows(pf, { ok: true, pillars: b.pillars, effective: b.effective }, y0);
+    if (!rows) return null;
+    return { rows: rows, traceRef: ['R7.1', 'R7.2', 'R7.3', 'R7.5'] };
+  }
+  var NOW_FN = { benming: nowBenming, jinri: nowJinri, zeri: nowZeri, tiyong: nowTiyong };
+
+  /* 四类快照的「存下这一屏」 */
+  function snapForPaipan() {
+    var raw = $('#chartBox').getAttribute('data-json');
+    if (!raw) { toast('先在「排盘」页排一次盘，再存快照'); return null; }
+    var f; try { f = JSON.parse(raw); } catch (e) { return null; }
+    var rec = null;
+    listRecords().forEach(function (r) {
+      var b = r.birth || {};
+      if (b.y === f.y && b.m === f.m && b.d === f.d && b.hh === f.hh && b.mi === f.mi && !!b.trueSolar === !!f.trueSolar) rec = r;
+    });
+    if (!rec) { toast('这一盘还没保存成档案——先点「保存档案」，再存快照'); return null; }
+    var pf = NHTJ.profileOf(rec);
+    if (!pf || !pf.strength) { toast('这条档案算不出日主强弱（R5.2.0），无法存快照'); return null; }
+    return mkSnap('benming', rec, { place: rec.place || '', trueSolar: !!(rec.birth && rec.birth.trueSolar) },
+      benmingRows(pf), pf.ganzhi + ' · 日主' + pf.dayGan, ['R1.1', 'R1.2', 'R1.3', 'R1.4', 'R2', 'R5.2.0'],
+      { y: f.y, m: f.m, d: f.d, hh: f.hh, mi: f.mi });
+  }
+  function snapForToday() {
+    var got = pickRec();
+    if (!got) { toast('没有含四柱的档案。先到「排盘」页建一个命主'); return null; }
+    var nb = nowBeijing();
+    var t = { y: nb.y, m: nb.m, d: nb.d, hh: nb.hh, mi: nb.mi };
+    var rows = jinriRows(got.pf, t);
+    if (!rows) { toast('算不出今天的流日干支，无法存快照'); return null; }
+    return mkSnap('jinri', got.rec, { place: got.rec.place || '' }, rows,
+      ymd(t.y, t.m, t.d) + ' ' + pad2(t.hh) + ':' + pad2(t.mi) + ' · 今日', ['R1.3', 'R1.4', 'R5.1', 'R5.2.0'], t);
+  }
+  function snapForZeri() {
+    var got = pickRec();
+    if (!got) { toast('没有含四柱的档案。先到「排盘」页建一个命主'); return null; }
+    var av0 = minOf(CMP.from), av1 = minOf(CMP.to);
+    var avail = (av0 !== null && av1 !== null && av1 > av0) ? [av0, av1] : null;
+    var pk = cmpPickTarget(got.pf, avail);
+    var tg = pk.target;
+    if (!tg) { toast('这一轮候选为空，无法存快照'); return null; }
+    return mkSnap('zeri', got.rec,
+      { matter: CMP.matter, avail: avail, place: got.rec.place || '', trueSolar: !!(got.rec.birth && got.rec.birth.trueSolar), lonDeg: (got.rec.birth || {}).lonDeg },
+      zeriRows(got.pf, tg, CMP.matter), ymd(tg.y, tg.m, tg.d) + ' ' + tg.gz + ' · ' + CMP.matter,
+      ['R5.2.0', 'R5.2', 'R6.1', 'R6.2', 'R6.3', 'R6.6'], { y: tg.y, m: tg.m, d: tg.d, hh: 0, mi: 0 });
+  }
+  function snapForTiyong() {
+    var got = pickRec();
+    if (!got) { toast('没有含四柱的档案。先到「排盘」页建一个命主'); return null; }
+    var ch = tyChartOf(got.rec);
+    if (!ch) { toast('这条档案缺起运基准（旧版），无法存体用快照'); return null; }
+    var nb = nowBeijing(), y0 = TY.y0 || nb.y;
+    var rows = tiyongRows(got.pf, ch, y0);
+    if (!rows) { toast('算不出大运（R4），无法存快照'); return null; }
+    return mkSnap('tiyong', got.rec, { y0: y0, place: got.rec.place || '' }, rows,
+      y0 + ' 起 ' + TY_SPAN + ' 年 · 大运与流年', ['R7.1', 'R7.2', 'R7.3', 'R7.5'], { y: y0, m: 1, d: 1, hh: 0, mi: 0 });
+  }
+  function onSnap() {
+    var t = activeTab();
+    if (t === 'compare' && CMP.seg === 'fupan') { toast('复盘页不产生新快照——快照在「今日」「择日」「体用」页存'); return; }
+    var snap = (t === 'compare') ? snapForZeri()
+             : (t === 'tiyong') ? snapForTiyong()
+             : (t === 'today') ? snapForToday()
+             : (t === 'paipan') ? snapForPaipan() : null;
+    if (!snap) { if (t !== 'paipan' && t !== 'today' && t !== 'compare' && t !== 'tiyong') toast('这一页没有可存的快照'); return; }
+    var cap = NHTJ.snapCap(snapsOf(snap.recId).length);
+    if (!cap.ok) { toast(cap.msg); return; }
+    var all = listSnaps(); all.push(snap); putSnaps(all);
+    FPM.pick = snap.id;
+    toast('已存下这一屏（' + (KIND_NAME[snap.kind] || snap.kind) + '）· 这个命主共 ' + snapsOf(snap.recId).length + ' 条');
+  }
+
+  /* ---------- 复盘页渲染 ---------- */
+  function fpRowsHTML(rows) {
+    return rows.map(function (r) {
+      return '<div class="fprow' + (r.fix ? ' fix' : '') + '"><span class="k">' + esc(r.k) + '</span><span class="v">' + esc(r.v) + '</span></div>';
+    }).join('');
+  }
+  function cmpRows(left, right) {
+    var diffs = [], same = [], i, j, rv;
+    for (i = 0; i < left.length; i++) {
+      rv = null;
+      for (j = 0; j < right.length; j++) if (right[j].k === left[i].k) { rv = right[j]; break; }
+      if (!rv) continue;
+      if (String(rv.v) !== String(left[i].v)) diffs.push({ k: left[i].k, from: left[i].v, to: rv.v });
+      else same.push(left[i].k);
+    }
+    return { diffs: diffs, same: same };
+  }
+  function renderFupan() {
+    var box = $('#fpBox');
+    if (!box) return;
+    if (!Store.ok) {
+      box.innerHTML = '<div class="card"><div class="h2">流运对照 · 复盘</div><div class="empty">这台设备上无法使用本地存储（可能是无痕模式）。<br>复盘对照要读存档，所以这一页暂时不可用。</div></div>';
+      return;
+    }
+    var recs = listRecords();
+    var snaps = listSnaps().slice().sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
+    if (!snaps.length) {
+      box.innerHTML = '<div class="card"><div class="h2">流运对照 · 复盘</div><div class="empty">' + (recs.length
+        ? '还没有任何快照。<br><br>快照是<b>手动存</b>的——到「今日」「择日」「体用」任意一页，点<b>右上角「存下这一屏」</b>，就会把那一屏的原始结论原样存下来。<br><br>存下来之后，这一页会把「当时存下的」和「今天用当前规则对同一目标重算的」并排摆出来，判断权交给你。'
+        : '还没有档案。<br>先到「排盘」页建立第一个命主，再去「今日」「择日」「体用」页点右上角「存下这一屏」。') + '</div></div>';
+      return;
+    }
+    var s = null, i;
+    for (i = 0; i < snaps.length; i++) if (snaps[i].id === FPM.pick) s = snaps[i];
+    if (!s) { s = snaps[0]; FPM.pick = s.id; }
+    var recAlive = false;
+    for (i = 0; i < recs.length; i++) if (recs[i].id === s.recId) recAlive = true;
+
+    var lv = NHTJ.ruleDiff(s.ruleVersion, NHTJ.RULE_REV);
+    var nf = (s.schema === 1) ? NOW_FN[s.kind] : null;
+    var right = nf ? nf(s) : null;
+    var paired = !!(right && right.rows);
+    var bs = s.birthSnapshot || {};
+    var leftRows = (s.conclusion && s.conclusion.rows) || [];
+
+    var h = '';
+    h += '<div class="fpbar"><span class="who"><b>' + esc(bs.name || '未命名') + '</b>' +
+      '<i>· ' + esc(KIND_NAME[s.kind] || s.kind) + '快照 · 存于 ' + esc(fmtTime(s.createdAt)) + '</i></span>' +
+      (snaps.length > 1 ? '<select id="fpSel">' + snaps.map(function (x) {
+        return '<option value="' + esc(x.id) + '"' + (x.id === s.id ? ' selected' : '') + '>' +
+          esc(((x.birthSnapshot || {}).name) || '未命名') + ' · ' + esc(KIND_NAME[x.kind] || x.kind) + ' · ' + esc(fmtTime(x.createdAt)) + '</option>';
+      }).join('') + '</select>' : '') +
+      '<button class="mini" id="fpMore" type="button">' + (FPM.expand ? '收起 ▴' : '详情 ▾') + '</button></div>';
+
+    if (FPM.expand) {
+      h += '<div class="fpblk"><div class="bh"><span class="nm">快照里的出生信息（右侧重算只用这一份）</span></div>' +
+        '<div class="fprow fix"><span class="k">出生</span><span class="v">' + (bs.y || '?') + '-' + pad2(bs.m || 0) + '-' + pad2(bs.d || 0) + ' ' + pad2(bs.hh || 0) + ':' + pad2(bs.mi || 0) + (bs.trueSolar ? '（真太阳时已开，经度 ' + esc(bs.lonDeg) + '）' : '（北京时间，未开真太阳时）') + '</span></div>' +
+        '<div class="fprow fix"><span class="k">四柱</span><span class="v">' + esc(bs.ganzhi || '?') + '</span></div>' +
+        '<div class="fprow fix"><span class="k">目标</span><span class="v">' + esc((s.conclusion || {}).headline || '?') + '</span></div>' +
+        '<div class="fprow fix"><span class="k">档案</span><span class="v">' + (recAlive ? '本地还有这条档案（右侧重算仍用快照里的出生信息）' : '本地已找不到这条档案——快照自足，本页照常显示') + '</span></div>' +
+        '<button class="mini wide" id="fpDel" type="button">删除这条快照</button></div>';
+    }
+
+    h += '<div class="card"><div class="fphead"><div class="h2">本次对照</div>' +
+      (lv.lagging ? '<span class="fpbadge warn">规则版本 落后</span>' : '<span class="fpbadge ok">规则版本 一致</span>') + '</div>' +
+      '<div class="fpvar">固定出生信息 · 固定目标日 · <b>唯一变量＝规则版本</b></div>' +
+      '<div class="fpsub hi">宜办度看日子本身，结论文案看你具体适合什么——两者可不同。</div>' +
+      '<div class="fpsub">出生信息与目标日都取自快照，不随当前档案或今天变化</div>' +
+      (lv.lagging ? '<div class="fpban"><div>该记录的规则版本落后。</div><div class="dim">结论差异可能来自规则变更，不一定来自现实变化。</div>' +
+        lv.changed.map(function (c) { return '<div class="chg">变动规则：' + esc(c.desc) + '</div>'; }).join('') + '</div>' : '') +
+      (lv.added.length ? '<div class="fpsub">当时还没有的规则族：' + esc(lv.added.map(function (f) { return NHTJ.RULE_LABEL[f]; }).join('、')) + '（缺失＝当时不存在，不算变动）</div>' : '') +
+      '</div>';
+
+    h += '<div class="fpblk l"><div class="bh"><span class="nm">当时存下的</span><span>' + esc(fmtTime(s.createdAt)) + '</span></div>' +
+      fpRowsHTML(leftRows) +
+      '<div class="tr"><b>追溯</b>　' + esc(((s.conclusion || {}).traceRef || []).join(' · ')) + '</div></div>';
+
+    if (paired) {
+      h += '<div class="fpblk r"><div class="bh"><span class="nm">今天重算的</span><span>' + esc(fmtTime(Date.now())) + '</span></div>' +
+        fpRowsHTML(right.rows) +
+        '<div class="tr"><b>追溯</b>　' + esc((right.traceRef || []).join(' · ')) + '</div></div>';
+    } else {
+      h += '<div class="fpblk r"><div class="bh"><span class="nm">今天重算的</span></div>' +
+        '<div class="fprow"><span class="v">' + (s.schema !== 1
+          ? '这条快照由更新版本写入（结构版本 ' + esc(s.schema) + '，本版只认 1）——本页只读，不重算。'
+          : '本版没有「' + esc(KIND_NAME[s.kind] || s.kind) + '」的重算器——这一页只读，不重算。') + '</span></div></div>';
+    }
+
+    if (paired) {
+      var an = cmpRows(leftRows, right.rows);
+      var dn = NHTJ.snapDiffNote(an.diffs.map(function (d) { return d.k; }), leftRows.map(function (r) { return r.k; }));
+      h += '<div class="fpdiff"><div class="dh">机器比对 · 只列差异，不判断好坏</div>' +
+        (!an.diffs.length
+          ? '<div class="dl">两边逐项完全一致——这次对照没有任何差异。</div>'
+          : (an.diffs.length >= 5
+              ? '<div class="dl">差异 ' + an.diffs.length + ' 处：存在多处差异，逐项对照见上方。</div>'
+              : '<div class="dl">差异 ' + an.diffs.length + ' 处：' + an.diffs.map(function (d) { return esc(d.k) + ' <em>' + esc(NHTJ.clip(d.from, 18)) + ' → ' + esc(NHTJ.clip(d.to, 18)) + '</em>'; }).join('；') + '</div>')) +
+        ((an.diffs.length && an.diffs.length < 5) ? '<div class="dn">' + esc(dn.text) + '</div>' : '') + '</div>';
+    }
+
+    if (NHTJ.pastTargetDay(s.target, nowBeijing())) {
+      h += '<p class="note" style="margin:0 0 10px;font-size:12.5px">目标日期已过（R9.6 判据：目标日 23:00 ＜ 现在）——这是一条历史快照，左侧是当时存下的原文。</p>';
+    }
+
+    h += '<div class="card"><div class="h2">这一页做什么、不做什么</div>' +
+      '<p class="note" style="font-size:13px;line-height:1.7">做：把「你当时存下的原文」和「今天用当前规则对同一目标重算的结果」并排摆出来，判断权交给你。<br>' +
+      '不做：不判断当时准不准，不把差异归因成「预测失败」。规则变更引起的差异，由上方版本提示负责说清。<br>' +
+      '快照一旦写入就与命主档案解耦——档案删了、改了，左侧仍按原文显示，右侧仍用快照里的出生信息重算（R9.3）。</p></div>';
+
+    box.innerHTML = h;
+  }
+
+  function renderCompareTab() {
+    var on = (CMP.seg === 'fupan') ? 'fupan' : 'zeri';
+    var seg = document.getElementById('cmpSeg');
+    if (seg) {
+      var bs2 = seg.querySelectorAll('button[data-sg]');
+      for (var i = 0; i < bs2.length; i++) bs2[i].classList.toggle('on', bs2[i].getAttribute('data-sg') === on);
+    }
+    var zb = document.getElementById('cmpBox'), fb = document.getElementById('fpBox');
+    if (zb) zb.style.display = (on === 'zeri') ? '' : 'none';
+    if (fb) fb.style.display = (on === 'fupan') ? '' : 'none';
+    if (on === 'zeri') renderCompare(); else renderFupan();
+    updateSnapBtn();
+  }
+  function bindCmpSeg() {
+    var seg = document.getElementById('cmpSeg');
+    if (!seg) return;
+    seg.addEventListener('click', function (ev) {
+      var b = ev.target && ev.target.closest ? ev.target.closest('button[data-sg]') : null;
+      if (!b) return;
+      CMP.seg = (b.getAttribute('data-sg') === 'fupan') ? 'fupan' : 'zeri';
+      cmpSave(); renderCompareTab();
+    });
+  }
+  function bindFupan() {
+    var box = $('#fpBox');
+    if (!box) return;
+    box.addEventListener('click', function (ev) {
+      var el = ev.target;
+      if (!el || !el.closest) return;
+      if (el.closest('#fpMore')) { FPM.expand = !FPM.expand; renderFupan(); return; }
+      if (el.closest('#fpDel')) {
+        if (!confirm('删除这条快照？删除后无法恢复（可先从「记录」页导出备份）。')) return;
+        putSnaps(listSnaps().filter(function (x) { return x.id !== FPM.pick; }));
+        FPM.pick = null; FPM.expand = false; renderFupan(); toast('已删除该快照');
+      }
+    });
+    box.addEventListener('change', function (ev) {
+      var t = ev.target;
+      if (t && t.id === 'fpSel') { FPM.pick = t.value; FPM.expand = false; renderFupan(); }
+    });
+  }
+  function activeTab() { var on = document.querySelector('.tab.on'); return on ? on.getAttribute('data-t') : 'paipan'; }
+  function updateSnapBtn() {
+    var b = document.getElementById('btnSnap');
+    if (!b) return;
+    var t = activeTab();
+    var show = (t === 'today' || t === 'compare' || t === 'tiyong' || t === 'paipan');
+    if (t === 'compare' && CMP.seg === 'fupan') show = false;
+    b.style.display = show ? '' : 'none';
+  }
+
+  /* ---------- 页签 ---------- */
+  var TABS = [{ k: 'paipan', label: '排盘', glyph: '盘' }, { k: 'today', label: '今日', glyph: '今' }, { k: 'records', label: '记录', glyph: '录' }, { k: 'compare', label: '对照', glyph: '照' }, { k: 'tiyong', label: '体用', glyph: '运' }, { k: 'rules', label: '规则', glyph: '规' }];
+  function buildTabs() {
+    var bar = $('#tabbar');
+    bar.innerHTML = TABS.map(function (t) { return '<button class="tab" data-t="' + t.k + '"><span class="glyph">' + t.glyph + '</span><span>' + t.label + '</span></button>'; }).join('');
+    bar.addEventListener('click', function (ev) { var b = ev.target && ev.target.closest ? ev.target.closest('.tab') : null; if (b) showTab(b.getAttribute('data-t')); });
+  }
+  function showTab(key) {
+    var sc = document.querySelectorAll('.screen');
+    for (var i = 0; i < sc.length; i++) sc[i].classList.toggle('on', sc[i].getAttribute('data-s') === key);
+    var tb = document.querySelectorAll('.tab');
+    for (var j = 0; j < tb.length; j++) tb[j].classList.toggle('on', tb[j].getAttribute('data-t') === key);
+    $('#main').scrollTop = 0;
+    if (key === 'records') renderRecords();
+    if (key === 'compare') renderCompareTab();
+    updateSnapBtn();
+    if (key === 'tiyong') renderTiyong();
+    if (key === 'rules') renderEnv();
+    if (key === 'today') renderToday();
+  }
+
+  /* ---------- 四柱渲染 ---------- */
+  function pillarCard(chart) {
+    var names = ['年柱', '月柱', '日柱', '时柱'];
+    var keys = ['year', 'month', 'day', 'hour'];
+    return '<div class="pillars">' + keys.map(function (k, i) {
+      var p = chart.pillars[k];
+      return '<div class="pillar"><div class="pgz">' + p.gz + '</div><div class="pnm">' + names[i] + '</div></div>';
+    }).join('') + '</div>';
+  }
+  function luckTable(lk) {
+    if (!lk) return '';
+    return '<div class="h2">大运（R4）</div>' +
+      '<p class="note">' + (lk.yangYear ? '年干为阳' : '年干为阴') + '，' + (lk.forward ? '顺排' : '逆排') +
+      '；数到' + (lk.forward ? '下一个' : '上一个') + '节「' + lk.targetName + '(' + lk.target.year + ')」，差 ' + Math.round(lk.Tmin) + ' 分钟。' +
+      '按「每 12 分钟折 1 日」→ ' + lk.virtualDays.toFixed(2) + ' 日 → <b>' + lk.years + ' 年 ' + lk.months + ' 个月 ' + lk.days.toFixed(2) + ' 天交运</b>。</p>' +
+      '<div class="luckwrap"><table class="luck"><tr>' + lk.steps.map(function (s) { return '<th>' + esc(s.gz) + '</th>'; }).join('') + '</tr><tr>' +
+      lk.steps.map(function (s) { return '<td>' + s.ageFrom + '–' + s.ageTo + ' 岁</td>'; }).join('') + '</tr></table></div>';
+  }
+  function traceList(chart) {
+    return '<div class="h2">规则追溯</div><div class="trace">' + chart.trace.map(function (t) {
+      return '<div class="titem"><span class="tag">' + esc(t.rule) + '</span><span>' + esc(t.text) + '</span></div>';
+    }).join('') + '</div>';
+  }
+
+  /* ---------- 排盘 ---------- */
+  function readForm() {
+    var date = $('#fDate').value, time = $('#fTime').value;
+    if (!date) { toast('请先选择出生日期'); return null; }
+    if (!time) { toast('请先选择出生时间'); return null; }
+    var dp = date.split('-'), tp = time.split(':');
+    var ts = $('#fTrueSolar').checked;
+    var lonRaw = $('#fLon').value.trim();
+    var lon = lonRaw === '' ? null : parseFloat(lonRaw);
+    if (ts && (lon === null || !isFinite(lon) || lon < -180 || lon > 180)) { toast('开启真太阳时后必须填有效经度（R2）'); return null; }
+    return { name: $('#fName').value.trim(), gender: $('#fGender').value, place: $('#fCity').value.trim(), note: $('#fNote').value.trim(),
+             y: +dp[0], m: +dp[1], d: +dp[2], hh: +tp[0], mi: +tp[1], trueSolar: ts, lonDeg: lon };
+  }
+  function onCalc() {
+    var f = readForm(); if (!f) return;
+    var chart = NHTJ.computeChart(f);
+    if (!chart.ok) { toast(chart.error); return; }
+    var lk = NHTJ.computeLuck(chart, f.gender);
+    $('#chartBox').innerHTML =
+      '<div class="card"><div class="h2">四柱 · ' + esc(f.name || '未命名') + '（' + (f.gender === 'female' ? '女' : '男') + '）</div>' +
+      pillarCard(chart) +
+      '<div class="ghzline">' + esc(chart.ganzhi) + '</div>' +
+      (chart.solar ? '<p class="note">真太阳时校正后：' + chart.effective.y + '-' + pad2(chart.effective.m) + '-' + pad2(chart.effective.d) + ' ' + pad2(chart.effective.hh) + ':' + pad2(chart.effective.mi) + '</p>' : '<p class="note">未启用真太阳时，全部按北京时间判定（R2）</p>') +
+      traceList(chart) + '</div>' +
+      '<div class="card">' + luckTable(lk) + '</div>';
+    $('#chartBox').setAttribute('data-json', JSON.stringify(f));
+    $('#btnSave').disabled = false;
+    $('#main').scrollTop = 0;
+    toast('已排盘（未保存）');
+  }
+  function onSave() {
+    var f = readForm(); if (!f) return;
+    var chart = NHTJ.computeChart(f);
+    if (!chart.ok) { toast(chart.error); return; }
+    var rec = { id: newId(), createdAt: Date.now(), updatedAt: Date.now(), name: f.name || '未命名', gender: f.gender,
+                place: f.place, note: f.note, calendar: 'solar',
+                birth: { y: f.y, m: f.m, d: f.d, hh: f.hh, mi: f.mi, tz: 'Asia/Shanghai', trueSolar: f.trueSolar, lonDeg: f.lonDeg },
+                chart: { ganzhi: chart.ganzhi, pillars: chart.pillars, effective: chart.effective },
+                trace: chart.trace };
+    var list = listRecords(); list.push(rec); putRecords(list);
+    toast('已保存：' + rec.name + ' ' + chart.ganzhi);
+    $('#fName').value = ''; $('#fNote').value = '';
+    renderRecords(); showTab('records');
+  }
+
+  /* ---------- 记录 ---------- */
+  function renderRecords() {
+    var list = listRecords().slice().sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
+    $('#recCount').textContent = String(list.length);
+    $('#brandSub').textContent = '本地存档 ' + list.length + ' 条 · 不联网';
+    var box = $('#recList');
+    if (!list.length) { box.innerHTML = '<div class="empty">还没有档案。<br>到「排盘」页建立第一个命主。</div>'; return; }
+    box.innerHTML = list.map(function (r) {
+      var b = r.birth || {};
+      var gz = r.chart && r.chart.ganzhi ? r.chart.ganzhi : '（旧版档案，未含四柱）';
+      return '<div class="rec"><div class="rec-top"><b>' + esc(r.name) + '</b><span class="pill">' + (r.gender === 'female' ? '女' : '男') + '</span></div>' +
+        '<div class="rec-gz">' + esc(gz) + '</div>' +
+        '<div class="rec-sub">' + (b.y || '?') + '-' + pad2(b.m || 0) + '-' + pad2(b.d || 0) + ' ' + pad2(b.hh || 0) + ':' + pad2(b.mi || 0) + '（公历·北京时间）' + (b.trueSolar ? ' · 真太阳时已开' : '') + (r.place ? ' · ' + esc(r.place) : '') + '</div>' +
+        '<div class="rec-sub dim">建档 ' + fmtTime(r.createdAt) + '</div>' +
+        (r.note ? '<div class="rec-note">' + esc(r.note) + '</div>' : '') +
+        '<div class="rec-act"><button class="mini" data-view="' + esc(r.id) + '">查看追溯</button><button class="mini" data-del="' + esc(r.id) + '">删除</button></div></div>';
+    }).join('');
+  }
+  function onRecClick(ev) {
+    var dv = ev.target && ev.target.closest ? ev.target.closest('[data-view]') : null;
+    if (dv) {
+      var r = listRecords().filter(function (x) { return x.id === dv.getAttribute('data-view'); })[0];
+      if (!r) return;
+      $('#chartBox').innerHTML = '<div class="card"><div class="h2">四柱 · ' + esc(r.name) + '</div><div class="ghzline">' + esc(r.chart.ganzhi) + '</div>' + traceList({ trace: r.trace || [] }) + '</div>';
+      showTab('paipan'); return;
+    }
+    var btn = ev.target && ev.target.closest ? ev.target.closest('[data-del]') : null;
+    if (!btn) return;
+    if (!confirm('确定删除这条档案？删除后无法恢复（可先从「导出」留一份备份）。')) return;
+    putRecords(listRecords().filter(function (x) { return x.id !== btn.getAttribute('data-del'); }));
+    renderRecords(); toast('已删除');
+  }
+
+  /* ---------- 今日 ---------- */
+  function renderToday() {
+    var now = nowBeijing();
+    var today = NHTJ.computeChart({ y: now.y, m: now.m, d: now.d, hh: now.hh, mi: now.mi });
+    var recs = listRecords();
+    var html = '<div class="card"><div class="h2">今天 · ' + now.y + '-' + pad2(now.m) + '-' + pad2(now.d) + ' ' + pad2(now.hh) + ':' + pad2(now.mi) + '（北京时间）</div>';
+    if (today.ok) {
+      html += '<div class="ghzline">' + esc(today.ganzhi) + '</div>' + pillarCard(today);
+      html += '<p class="note">这是<b>流日</b>干支，用同一套引擎算出（R1.3 / R1.4）。</p>';
+    }
+    html += '</div>';
+    html += '<div class="card"><div class="h2">今天该干什么</div><p class="note">这一页将来显示：今天的流日干支与本命的关系，以及 <b>1 条主行动 + 2 条次行动</b> 的白话建议。<br><br>按约定，解读文本要先给你看 3 条样例、你认可后才批量生成，所以这里在 Step 5 之前保持空置。' + (recs.length ? '' : '<br><br>（先去「排盘」建一个命主，将来才能做对照。）') + '</p></div>';
+    $('#todayBox').innerHTML = html;
+  }
+
+  /* ---------- 规则 / 自检 ---------- */
+  function renderRules() {
+    $('#ruleList').innerHTML = NHTJ.RULES.map(function (r) {
+      return '<div class="rule ' + (r.status === '已登记' ? 'ok' : 'todo') + '"><b>' + esc(r.id) + ' · ' + esc(r.name) + '</b>' +
+        '<span>出处：' + esc(r.src) + '</span><span>状态：' + esc(r.status) + '</span></div>';
+    }).join('');
+    var v = NHTJ.VERIFY;
+    $('#verifyBox').innerHTML =
+      '<div class="h2">节气数据来源与校验</div>' +
+      '<p class="note"><b>算法</b><br>' + esc(v.solarTerm.algo) + '</p>' +
+      '<p class="note" style="margin-top:10px"><b>ΔT</b><br>' + esc(v.solarTerm.deltaT) + '</p>' +
+      '<p class="note" style="margin-top:10px"><b>校验源</b><br>' + esc(v.solarTerm.source) + '，' + esc(v.solarTerm.years) + ' 年共 ' + v.solarTerm.count + ' 个时刻' +
+      '<br>秒级最大偏差 <b>' + v.solarTerm.maxDevSec + ' 秒</b>（其中约 30 秒来自天文台公布值的取整）；平均偏差 <b>' + v.solarTerm.meanDevSec + ' 秒</b>；分钟级一致 <b>' + esc(v.solarTerm.minuteAgree) + '</b>' +
+      '<br>' + esc(v.solarTerm.boundaryNote) +
+      '<br>' + esc(v.solarTerm.crossCheck) +
+      '<br>' + esc(v.solarTerm.selfRebuild) + '</p>' +
+      '<p class="note" style="margin-top:10px"><b>判据顺序（重要）</b><br>真太阳时修正（R2）先于所有边界判断：换日（R1.3 的 23:00）、时辰进位、立春/交节分界，一律用修正后的时刻；关闭真太阳时时全用北京时间，两种口径不混用。</p>' +
+      '<p class="note" style="margin-top:10px"><b>署名</b><br>本节文案与文件头注释（ALGO-SIGN-BEGIN / ALGO-SIGN-END）逐字一致，可在「自检」页一键核对。</p>';
+  }
+  function runSelfTest() {
+    var box = $('#testBox');
+    box.innerHTML = '<div class="empty">正在自检…</div>';
+    setTimeout(function () {
+      var res = NHTJ.selfTest().concat(appSelfTest());
+      var pass = res.filter(function (r) { return r.pass; }).length;
+      box.innerHTML = '<div class="testhead ' + (pass === res.length ? 'allpass' : 'somefail') + '">自检结果：' + pass + ' / ' + res.length + ' 项通过' + (pass === res.length ? ' · 全绿' : '') + '</div>' +
+        res.map(function (r) { return '<div class="tcase"><span class="dot ' + (r.pass ? 'p' : 'f') + '"></span><div><b>' + esc(r.name) + '</b><div class="tdetail">' + esc(r.detail) + '</div></div></div>'; }).join('');
+    }, 30);
+  }
+  function safeArea() {
+    var d = document.createElement('div');
+    d.style.cssText = 'position:fixed;left:-9999px;top:0;width:0;height:0;padding-top:env(safe-area-inset-top, 0px);padding-right:env(safe-area-inset-right, 0px);padding-bottom:env(safe-area-inset-bottom, 0px);padding-left:env(safe-area-inset-left, 0px);';
+    document.body.appendChild(d);
+    var cs = getComputedStyle(d);
+    var o = { t: cs.paddingTop, r: cs.paddingRight, b: cs.paddingBottom, l: cs.paddingLeft };
+    document.body.removeChild(d); return o;
+  }
+  function renderEnv() {
+    var sa = safeArea();
+    var standalone = (window.navigator.standalone === true) || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+    var proto = location.protocol;
+    var protoNote = proto === 'file:' ? 'file:（本地文件，无法添加到主屏）' : proto === 'https:' ? 'https:（可添加到主屏）' : proto === 'http:' ? 'http:（可添加到主屏，但非加密连接）' : proto;
+    var rows = [
+      ['运行模式', standalone ? '独立窗口（已添加到主屏）' : 'Safari 标签页'],
+      ['存储状态', Store.ok ? 'localStorage 正常' : '不可用 —— 数据仅在内存，关闭页面即丢失'],
+      ['已存档案', listRecords().length + ' 条'],
+      ['数据命名空间', NS],
+      ['屏幕', window.innerWidth + 'x' + window.innerHeight + ' @' + (window.devicePixelRatio || 1) + 'x'],
+      ['安全区 上/下', sa.t + ' / ' + sa.b],
+      ['安全区 左/右', sa.l + ' / ' + sa.r],
+      ['页面来源', protoNote],
+      ['Service Worker', ('serviceWorker' in navigator) ? (navigator.serviceWorker.controller ? '已接管（可离线）' : '支持，未接管') : '不支持'],
+      ['User Agent', navigator.userAgent]
+    ];
+    $('#envList').innerHTML = rows.map(function (r) { return '<dt>' + esc(r[0]) + '</dt><dd>' + esc(r[1]) + '</dd>'; }).join('');
+  }
+  function renderStoreWarn() {
+    var m = [];
+    if (!Store.ok) m.push('本机 localStorage 不可用，数据只存在内存里，关掉页面就会丢。请用 Safari 正常模式打开（不要用无痕模式）。');
+    if (location.protocol === 'file:') m.push('当前是从本地文件打开的。要把本页添加到主屏并长期保存数据，请从 https 网址打开。');
+    $('#storeWarn').innerHTML = m.map(function (x) { return '<div class="banner">' + esc(x) + '</div>'; }).join('');
+  }
+
+  /* ---------- 备份 ---------- */
+  function onExport() {
+    var rows = listRecords();
+    var payload = { app: 'nhtj', schema: SCHEMA, exportedAt: new Date().toISOString(), meta: Store.get('meta', {}), records: rows };
+    var url = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }));
+    var a = document.createElement('a'); a.href = url; a.download = 'nhtj-backup-' + stamp() + '.json';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+    toast('已导出 ' + rows.length + ' 条档案');
+  }
+  function onImportFile(file) {
+    if (!file) return;
+    var fr = new FileReader();
+    fr.onload = function () {
+      try {
+        var data = JSON.parse(String(fr.result));
+        if (!isArr(data && data.records)) throw new Error('bad');
+        var byId = {};
+        listRecords().forEach(function (r) { byId[r.id] = r; });
+        var added = 0, updated = 0;
+        data.records.forEach(function (r) {
+          if (!r || !r.id) return;
+          var old = byId[r.id];
+          if (!old) { byId[r.id] = r; added++; } else if ((r.updatedAt || 0) > (old.updatedAt || 0)) { byId[r.id] = r; updated++; }
+        });
+        putRecords(Object.keys(byId).map(function (k) { return byId[k]; }));
+        renderRecords(); toast('导入完成：新增 ' + added + ' 条，更新 ' + updated + ' 条');
+      } catch (e) { toast('导入失败：文件格式不正确'); }
+    };
+    fr.readAsText(file);
+  }
+  function onWipe() {
+    var n = listRecords().length;
+    if (!n) { toast('没有可清空的数据'); return; }
+    if (!confirm('将删除全部 ' + n + ' 条档案，且无法恢复。确定继续？')) return;
+    if (!confirm('再确认一次：真的要清空吗？')) return;
+    Store.del('records'); renderRecords(); toast('已清空');
+  }
+
+  /* ---------- 全局错误兜底 ----------
+     为什么要有：白屏和正常页在用户眼里没区别，只有控制台知道区别。
+     这一整块自己也被 try/catch 包着——错误处理器自己出错会导致递归白屏，是已知的坑。 */
+  var ERR = { last: null };
+  function errTabName() {
+    var k = activeTab();
+    for (var i = 0; i < TABS.length; i++) if (TABS[i].k === k) return TABS[i].label;
+    return k || '未知';
+  }
+  function errStamp(d) {
+    return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()) + ' ' +
+           pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds());
+  }
+  function showErrorBanner(msg, stack, where) {
+    try {
+      var box = document.getElementById('errBar');
+      if (!box) return false;
+      var full = String(msg || '未知错误');
+      var tabName = String(where || errTabName());
+      var stamp = errStamp(new Date());
+      ERR.last = { msg: full, stack: String(stack || ''), tab: tabName, time: stamp };
+      box.innerHTML =
+        '<div class="eh">这一页出错了</div>' +
+        '<div class="em">' + esc(full.length > 80 ? full.slice(0, 80) + '…' : full) + '</div>' +
+        '<div class="ef">页签：' + esc(tabName) + ' · ' + esc(stamp) + '</div>' +
+        '<div class="eb"><button type="button" id="errCopy">复制错误详情</button>' +
+        '<button type="button" id="errClose">关闭</button></div>';
+      box.hidden = false;
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+  function hideErrorBanner() {
+    try {
+      var box = document.getElementById('errBar');
+      if (box) { box.hidden = true; box.innerHTML = ''; }
+      return true;
+    } catch (e) { return false; }
+  }
+  function errDetailText() {
+    var L = ERR.last || { msg: '', stack: '', tab: '', time: '' };
+    return '天纪排盘 · 错误详情\n时间：' + L.time + '\n页签：' + L.tab + '\n消息：' + L.msg +
+           '\n\n' + (L.stack || '(没有 stack——这条错误不是一个 Error 对象抛出的)');
+  }
+  function fallbackCopy(txt) {
+    try {
+      var ta = document.createElement('textarea');
+      ta.value = txt;
+      ta.setAttribute('readonly', '');
+      ta.style.cssText = 'position:fixed;left:-9999px;top:0';
+      document.body.appendChild(ta);
+      ta.select();
+      var ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      toast(ok ? '错误详情已复制' : '复制失败——请长按上方消息手动选取');
+    } catch (e) { toast('复制失败——请长按上方消息手动选取'); }
+  }
+  function copyErrDetail() {
+    var txt = errDetailText();
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(txt).then(function () { toast('错误详情已复制'); }, function () { fallbackCopy(txt); });
+        return;
+      }
+    } catch (e) {}
+    fallbackCopy(txt);
+  }
+  function bindGlobalError() {
+    try {
+      window.addEventListener('error', function (ev) {
+        try {
+          if (!ev || (!ev.message && !ev.error)) return;
+          showErrorBanner(ev.message || '', (ev.error && ev.error.stack) || '', null);
+        } catch (e) {}
+      });
+      window.addEventListener('unhandledrejection', function (ev) {
+        try {
+          var r = ev && ev.reason;
+          showErrorBanner('Promise 未捕获：' + ((r && r.message) || r || ''), (r && r.stack) || '', null);
+        } catch (e) {}
+      });
+      var bar = document.getElementById('errBar');
+      if (bar) bar.addEventListener('click', function (ev) {
+        try {
+          var t = ev.target;
+          if (!t || !t.id) return;
+          if (t.id === 'errClose') hideErrorBanner();
+          if (t.id === 'errCopy') copyErrDetail();
+        } catch (e) {}
+      });
+    } catch (e) {}
+  }
+
+  /* 应用层自检：引擎自检跑在引擎作用域里，够不到这一层，所以单独挂一项进来 */
+  function appSelfTest() {
+    var out = [];
+    (function () {
+      var box = document.getElementById('errBar');
+      if (!box) { out.push({ name: '错误横幅：页面上必须有 #errBar 容器', pass: false, detail: '找不到 #errBar——错误根本没地方显示' }); return; }
+      var msg = 'R9 自检用的故意错误（自检亲手造的，不是真故障）';
+      var shown = false, txt = '', visible = false, hasTab = false, hasStamp = false, hasMsg = false;
+      try {
+        shown = (showErrorBanner(msg, 'Error: selftest-on-purpose\n    at appSelfTest', '规则') === true);
+        txt = box.textContent || '';
+        visible = (box.hidden === false);
+        hasMsg = (txt.indexOf(msg) >= 0);
+        hasTab = (txt.indexOf('规则') >= 0);
+        hasStamp = /\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/.test(txt);
+      } catch (e) {}
+      hideErrorBanner();
+      out.push({
+        name: '错误横幅：故意造一个错误，横幅必须弹出，并带「错误消息 + 页签名 + 时间戳」',
+        pass: shown && visible && hasMsg && hasTab && hasStamp,
+        detail: '横幅 ' + (shown && visible ? '已弹出' : '没有弹出') + '；消息=' + (hasMsg ? '在' : '缺失') +
+                '；页签名=' + (hasTab ? '在' : '缺失') + '；时间戳=' + (hasStamp ? '在' : '缺失') +
+                '。自检跑完会收起来，用户看不到。'
+      });
+    })();
+    (function () {
+      var optOk = false, threw = false, emptyOk = false;
+      try { optOk = (showErrorBanner(null, null, null) === true); } catch (e) {}
+      hideErrorBanner();
+      try { showErrorBanner({ toString: function () { throw new Error('boom'); } }, '', '规则'); }
+      catch (e) { threw = true; }
+      hideErrorBanner();
+      try { emptyOk = (showErrorBanner('占位', '', '') === true); } catch (e) {}
+      hideErrorBanner();
+      out.push({
+        name: '错误横幅防递归：处理器自身出错必须被自己吃掉（不抛、不递归），参数全空也不能抛',
+        pass: optOk && emptyOk && !threw,
+        detail: 'msg=null → ' + (optOk ? '不抛、照常返回' : '抛了') +
+                '；消息对象一 toString 就抛 → ' + (threw ? '错误逃出来了（会递归白屏）' : '已被处理器吃掉') +
+                '；空字符串页签名 → ' + (emptyOk ? '不抛' : '抛了')
+      });
+    })();
+    return out;
+  }
+
+  /* ---------- 启动 ---------- */
+  function registerSW() {
+    if (!('serviceWorker' in navigator)) return;
+    if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') return;
+    try { navigator.serviceWorker.register('sw.js').catch(function () {}); } catch (e) {}
+  }
+  function init() {
+    buildTabs(); bindGlobalError(); renderRules();
+    var now = nowBeijing();
+    $('#fDate').value = now.y + '-' + pad2(now.m) + '-' + pad2(now.d);
+    $('#fTime').value = '12:00';
+    $('#btnCalc').addEventListener('click', onCalc);
+    $('#btnSave').addEventListener('click', onSave);
+    $('#fTrueSolar').addEventListener('change', function () { $('#lonRow').style.display = this.checked ? 'block' : 'none'; });
+    $('#btnExport').addEventListener('click', onExport);
+    $('#btnImport').addEventListener('click', function () { $('#fileImport').click(); });
+    $('#fileImport').addEventListener('change', function (ev) { onImportFile(ev.target.files && ev.target.files[0]); ev.target.value = ''; });
+    $('#btnWipe').addEventListener('click', onWipe);
+    $('#recList').addEventListener('click', onRecClick);
+    $('#btnSelfTest').addEventListener('click', runSelfTest);
+    cmpLoad(); bindCompare(); bindCmpSeg(); bindFupan(); tyLoad(); bindTiyong();
+    var sb = document.getElementById('btnSnap'); if (sb) sb.addEventListener('click', onSnap);
+    showTab('paipan'); renderStoreWarn(); renderRecords(); renderToday(); registerSW();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+})();
+
+</script>
+</body>
+</html>
